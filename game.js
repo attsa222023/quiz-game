@@ -183,6 +183,15 @@ function renderModeArea() {
 
 document.querySelectorAll("#mode-toggle .mode-btn").forEach(btn => {
   btn.addEventListener("click", () => {
+    // window.Online only exists once online.js's ES module has finished
+    // loading; check at click-time rather than page-load, since there's no
+    // reliable way to know earlier whether it succeeded or failed (ad
+    // blocker, offline, file://) without an artificial delay.
+    if (btn.dataset.mode === "online" && !window.Online) {
+      el("online-error").textContent = "Online play isn't available right now (check your connection, or try a different browser/network if an ad-blocker may be interfering).";
+      el("online-error").classList.remove("hidden");
+      return;
+    }
     selectedMode = btn.dataset.mode;
     onlineSubMode = null;
     document.querySelectorAll("#mode-toggle .mode-btn").forEach(b => b.classList.toggle("active", b === btn));
@@ -212,6 +221,14 @@ el("online-back-btn").addEventListener("click", () => {
     onlineRoomUnsubscribe();
     onlineRoomUnsubscribe = null;
   }
+  // Only reachable from the pre-match waiting lobby (once a match starts
+  // we're on #game-screen with its own quit-btn/forfeit path instead), so
+  // cancelling here always means "no opponent joined yet, back out."
+  if (onlineRoomCode && window.Online) {
+    Online.cancelRoom(onlineRoomCode).catch(err => console.error("cancelRoom failed", err));
+  }
+  onlineRoomCode = null;
+  onlineMyPlayer = null;
   onlineSubMode = null;
   renderModeArea();
   showScreen("menu");
@@ -219,7 +236,12 @@ el("online-back-btn").addEventListener("click", () => {
 
 el("copy-code-btn").addEventListener("click", () => {
   if (!onlineRoomCode) return;
-  navigator.clipboard?.writeText(onlineRoomCode).catch(() => {});
+  navigator.clipboard?.writeText(onlineRoomCode).then(() => {
+    const btn = el("copy-code-btn");
+    const original = btn.textContent;
+    btn.textContent = "Copied!";
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  }).catch(() => {});
 });
 
 el("time-slider").addEventListener("input", () => {
