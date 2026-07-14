@@ -369,8 +369,14 @@ function startOnlineGame(roomData) {
     score: 0,
     basePoints: 0,
     bonusPoints: 0,
-    slotStart: roomData.slotDeadline - roomData.timeLimit * 1000,
-    slotDeadline: roomData.slotDeadline,
+    // slotStart/slotDeadline/clockOffsetMs aren't known yet - roomData's
+    // slotStartedAt may still be an unresolved serverTimestamp() sentinel
+    // at this point (e.g. right after our own joinRoom transaction).
+    // applyRoomSnapshot populates these as soon as a resolved value arrives
+    // and starts the tick loop then, rather than here.
+    slotStart: null,
+    slotDeadline: null,
+    clockOffsetMs: 0,
     turn: roomData.turn,
     consecutiveMisses: roomData.consecutiveMisses || 0,
     players: {
@@ -390,10 +396,6 @@ function startOnlineGame(roomData) {
   setFeedback("Match started!", "neutral");
 
   onlineRoomUnsubscribe = Online.subscribeToRoom(onlineRoomCode, applyRoomSnapshot);
-
-  clearInterval(tickHandle);
-  tickHandle = setInterval(tick, 50);
-  tick();
 }
 
 // Reconciles local state from a Firestore room snapshot - the single point
@@ -403,8 +405,6 @@ function startOnlineGame(roomData) {
 function applyRoomSnapshot(data) {
   if (!data || !state || !state.online) return;
 
-  const deadlineChanged = data.slotDeadline !== state.slotDeadline;
-
   state.found = data.found || [];
   state.remaining = new Set(computeRemaining(state.answers, state.found));
   state.players = {
@@ -413,15 +413,32 @@ function applyRoomSnapshot(data) {
   };
   state.turn = data.turn;
   state.consecutiveMisses = data.consecutiveMisses || 0;
-  state.slotDeadline = data.slotDeadline;
-  state.slotStart = data.slotDeadline != null ? data.slotDeadline - state.timeLimit * 1000 : null;
   // Authoritative outcome from Firestore - needed because a forfeit can
   // decide a winner independent of score (e.g. quitting a 0-0 match), which
   // a client-side score comparison alone would get wrong.
   state.winner = data.winner;
 
-  if (deadlineChanged) {
-    state._timeoutAttempted = false;
+  // slotStartedAt is a Firestore serverTimestamp() - the single source of
+  // truth both devices' race-adjudication compares against, so neither
+  // device's own (possibly skewed) clock can desync the match or steal a
+  // turn. It resolves to null momentarily in the writing client's own
+  // optimistic snapshot until the server confirms it; skip until then.
+  if (data.slotStartedAt) {
+    const resolvedMs = data.slotStartedAt.toMillis();
+    if (resolvedMs !== state.slotStart) {
+      state.slotStart = resolvedMs;
+      state.slotDeadline = resolvedMs + state.timeLimit * 1000;
+      // Per-slot recalibration of this device's own clock error against the
+      // server's, so this device's *own* countdown rendering stays close to
+      // true time too - not just cross-device race-safety, which the
+      // serverTimestamp() value alone already guarantees regardless of this.
+      state.clockOffsetMs = resolvedMs - Date.now();
+      state._timeoutAttempted = false;
+      if (!tickHandle) {
+        tickHandle = setInterval(tick, 50);
+        tick();
+      }
+    }
   }
 
   updateGameStats();
@@ -540,8 +557,14 @@ function nextSlot() {
 function tick() {
   // Online matches share a deadline across two machines, so it has to be
   // measured against a clock both agree on (epoch ms); performance.now()
-  // is only meaningful within a single page's lifetime.
-  const now = state.online ? Date.now() : performance.now();
+  // is only meaningful within a single page's lifetime. clockOffsetMs
+  // corrects for this device's own clock error vs. the server's, estimated
+  // in applyRoomSnapshot each time a new slot starts - the deadline itself
+  // (slotDeadline, from a Firestore serverTimestamp()) is already immune to
+  // clock skew for race-adjudication purposes; this only makes the local
+  // countdown rendering track true time more closely too.
+  if (state.online && state.slotDeadline == null) return; // no resolved slot yet
+  const now = state.online ? Date.now() + state.clockOffsetMs : performance.now();
   const remainingMs = state.slotDeadline - now;
   const frac = Math.max(0, remainingMs / (state.timeLimit * 1000));
   const fill = el("timer-fill");
@@ -593,7 +616,11 @@ function handleTimeoutLocal() {
 function handleTimeoutOnline() {
   if (state._timeoutAttempted) return;
   state._timeoutAttempted = true;
-  Online.writeTimeout(state.roomCode, state.turn, state.slotDeadline).catch(err => {
+  // state.slotStart is the resolved server-timestamp ms value for the
+  // current slot - the CAS check in online.js compares against this, not a
+  // client-computed deadline, so the race is adjudicated independent of
+  // either device's clock accuracy.
+  Online.writeTimeout(state.roomCode, state.turn, state.slotStart).catch(err => {
     console.error("writeTimeout failed", err);
   });
 }
@@ -668,7 +695,7 @@ function submitAnswerOnline(raw) {
   const canonical = state.answerKey.get(norm);
 
   if (canonical && state.remaining.has(canonical)) {
-    const elapsed = (Date.now() - state.slotStart) / 1000;
+    const elapsed = (Date.now() + state.clockOffsetMs - state.slotStart) / 1000;
     const timeTaken = Math.min(elapsed, state.timeLimit);
     const bonus = Math.round(MAX_BONUS * (1 - timeTaken / state.timeLimit));
     const isLastAnswer = state.remaining.size === 1;

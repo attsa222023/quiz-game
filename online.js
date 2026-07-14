@@ -8,6 +8,7 @@ import {
   updateDoc,
   onSnapshot,
   runTransaction,
+  serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Excludes visually-ambiguous characters (0/O, 1/I) since codes get shared
@@ -49,7 +50,7 @@ async function createRoom(categoryIndex, lang, timeLimit) {
     status: "waiting",
     turn: 1,
     consecutiveMisses: 0,
-    slotDeadline: null,
+    slotStartedAt: null,
     found: [],
     players: {
       1: { uid, score: 0, basePoints: 0, bonusPoints: 0, correct: 0 },
@@ -79,10 +80,12 @@ async function joinRoom(roomCode) {
       ...d.players,
       2: { uid, score: 0, basePoints: 0, bonusPoints: 0, correct: 0 },
     };
-    const slotDeadline = Date.now() + d.timeLimit * 1000;
-    tx.update(ref, { status: "active", slotDeadline, players: updatedPlayers });
+    tx.update(ref, { status: "active", slotStartedAt: serverTimestamp(), players: updatedPlayers });
 
-    return { ...d, status: "active", slotDeadline, players: updatedPlayers };
+    // The real value of slotStartedAt isn't known until the server resolves
+    // the serverTimestamp() sentinel - the caller's subscribeToRoom listener
+    // receives it moments later, so this placeholder is intentionally null.
+    return { ...d, status: "active", slotStartedAt: null, players: updatedPlayers };
   });
 
   return { roomCode, player: 2, roomData };
@@ -153,7 +156,7 @@ async function writeCorrectAnswer(roomCode, player, answerName, timeTaken, baseP
         [`players.${player}`]: updatedPlayer,
         turn: otherPlayer,
         consecutiveMisses: 0,
-        slotDeadline: Date.now() + d.timeLimit * 1000,
+        slotStartedAt: serverTimestamp(),
       });
     }
   });
@@ -162,11 +165,15 @@ async function writeCorrectAnswer(roomCode, player, answerName, timeTaken, baseP
 // Both clients' tick() loops call this unconditionally once their local
 // clock thinks the deadline has passed - not just whoever's turn it is.
 // The transaction is what actually adjudicates: it only commits if the
-// room's turn/deadline still match what this client last saw, so whichever
-// call reaches Firestore first wins and the other silently no-ops. This
-// also covers a backgrounded/throttled tab - the *other* client's tick
-// eventually resolves it.
-async function writeTimeout(roomCode, expectedTurn, expectedDeadline) {
+// room's turn/current slot still match what this client last saw, so
+// whichever call reaches Firestore first wins and the other silently
+// no-ops. This also covers a backgrounded/throttled tab - the *other*
+// client's tick eventually resolves it.
+//
+// expectedSlotStartedAtMs is the resolved (server) millisecond value of
+// slotStartedAt this client last saw, NOT a client-computed deadline - see
+// the clock-skew note on slotStartedAt below.
+async function writeTimeout(roomCode, expectedTurn, expectedSlotStartedAtMs) {
   const db = window.Firebase.db;
   const ref = doc(db, "rooms", roomCode);
 
@@ -174,7 +181,8 @@ async function writeTimeout(roomCode, expectedTurn, expectedDeadline) {
     const snap = await tx.get(ref);
     if (!snap.exists()) return;
     const d = snap.data();
-    if (d.status !== "active" || d.turn !== expectedTurn || d.slotDeadline !== expectedDeadline) {
+    const currentStartedAtMs = d.slotStartedAt ? d.slotStartedAt.toMillis() : null;
+    if (d.status !== "active" || d.turn !== expectedTurn || currentStartedAtMs !== expectedSlotStartedAtMs) {
       return; // already resolved by the other client (or a real answer landed first)
     }
     const misses = d.consecutiveMisses + 1;
@@ -188,7 +196,7 @@ async function writeTimeout(roomCode, expectedTurn, expectedDeadline) {
       tx.update(ref, {
         turn: expectedTurn === 1 ? 2 : 1,
         consecutiveMisses: misses,
-        slotDeadline: Date.now() + d.timeLimit * 1000,
+        slotStartedAt: serverTimestamp(),
       });
     }
   });
