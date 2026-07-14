@@ -102,16 +102,104 @@ async function cancelRoom(roomCode) {
   await updateDoc(ref, { status: "finished", winner: null });
 }
 
-async function writeCorrectAnswer(roomCode, player, answerName, timeTaken, basePoints, bonus) {
-  throw new Error("Online.writeCorrectAnswer not implemented yet (Phase 4)");
+function computeWinner(players) {
+  const p1 = players["1"];
+  const p2 = players["2"];
+  if (p1.score > p2.score) return 1;
+  if (p2.score > p1.score) return 2;
+  return "tie";
 }
 
-async function writeTimeout(roomCode, expectedTurn, expectedDeadline, timeLimit) {
-  throw new Error("Online.writeTimeout not implemented yet (Phase 4)");
+// Compare-and-swap: reads the room, verifies it's still this player's turn
+// and the answer hasn't already been credited (guards against a stale/late
+// call racing a timeout that already resolved this slot), then commits.
+// isLastAnswer is decided by the caller (which already knows the full
+// category answer list locally) since Firestore never sees the answer key.
+async function writeCorrectAnswer(roomCode, player, answerName, timeTaken, basePoints, bonus, isLastAnswer) {
+  const db = window.Firebase.db;
+  const ref = doc(db, "rooms", roomCode);
+
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return;
+    const d = snap.data();
+    if (d.status !== "active") return;
+    if (d.turn !== player) return;
+    if (d.found.some(f => f.name === answerName)) return;
+
+    const newFound = [...d.found, { name: answerName, player, timeTaken }];
+    const p = d.players[String(player)];
+    const updatedPlayer = {
+      ...p,
+      basePoints: p.basePoints + basePoints,
+      bonusPoints: p.bonusPoints + bonus,
+      score: p.score + basePoints + bonus,
+      correct: p.correct + 1,
+    };
+    const otherPlayer = player === 1 ? 2 : 1;
+
+    if (isLastAnswer) {
+      const playersAfter = { ...d.players, [player]: updatedPlayer };
+      tx.update(ref, {
+        found: newFound,
+        [`players.${player}`]: updatedPlayer,
+        status: "finished",
+        winner: computeWinner(playersAfter),
+        consecutiveMisses: 0,
+      });
+    } else {
+      tx.update(ref, {
+        found: newFound,
+        [`players.${player}`]: updatedPlayer,
+        turn: otherPlayer,
+        consecutiveMisses: 0,
+        slotDeadline: Date.now() + d.timeLimit * 1000,
+      });
+    }
+  });
 }
 
+// Both clients' tick() loops call this unconditionally once their local
+// clock thinks the deadline has passed - not just whoever's turn it is.
+// The transaction is what actually adjudicates: it only commits if the
+// room's turn/deadline still match what this client last saw, so whichever
+// call reaches Firestore first wins and the other silently no-ops. This
+// also covers a backgrounded/throttled tab - the *other* client's tick
+// eventually resolves it.
+async function writeTimeout(roomCode, expectedTurn, expectedDeadline) {
+  const db = window.Firebase.db;
+  const ref = doc(db, "rooms", roomCode);
+
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return;
+    const d = snap.data();
+    if (d.status !== "active" || d.turn !== expectedTurn || d.slotDeadline !== expectedDeadline) {
+      return; // already resolved by the other client (or a real answer landed first)
+    }
+    const misses = d.consecutiveMisses + 1;
+    if (misses >= 2) {
+      tx.update(ref, {
+        status: "finished",
+        consecutiveMisses: misses,
+        winner: computeWinner(d.players),
+      });
+    } else {
+      tx.update(ref, {
+        turn: expectedTurn === 1 ? 2 : 1,
+        consecutiveMisses: misses,
+        slotDeadline: Date.now() + d.timeLimit * 1000,
+      });
+    }
+  });
+}
+
+// Unilateral - no CAS needed, whoever quits simply forfeits.
 async function forfeitMatch(roomCode, forfeitingPlayer) {
-  throw new Error("Online.forfeitMatch not implemented yet (Phase 5)");
+  const db = window.Firebase.db;
+  const ref = doc(db, "rooms", roomCode);
+  const winner = forfeitingPlayer === 1 ? 2 : 1;
+  await updateDoc(ref, { status: "finished", winner });
 }
 
 window.Online = {

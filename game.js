@@ -347,7 +347,7 @@ function startOnlineGame(roomData) {
     score: 0,
     basePoints: 0,
     bonusPoints: 0,
-    slotStart: null,
+    slotStart: roomData.slotDeadline - roomData.timeLimit * 1000,
     slotDeadline: roomData.slotDeadline,
     turn: roomData.turn,
     consecutiveMisses: roomData.consecutiveMisses || 0,
@@ -355,6 +355,8 @@ function startOnlineGame(roomData) {
       1: { ...roomData.players[1] },
       2: { ...roomData.players[2] },
     },
+    _timeoutAttempted: false,
+    _finished: false,
   };
   el("game-cat-name").textContent = cat.name;
   el("total-count").textContent = source.answers.length;
@@ -366,14 +368,21 @@ function startOnlineGame(roomData) {
   setFeedback("Match started!", "neutral");
 
   onlineRoomUnsubscribe = Online.subscribeToRoom(onlineRoomCode, applyRoomSnapshot);
+
+  clearInterval(tickHandle);
+  tickHandle = setInterval(tick, 50);
+  tick();
 }
 
-// Reconciles local state from a Firestore room snapshot. Reuses the exact
-// same render functions (updateGameStats/renderFoundChips) local mode uses.
-// Phase 4 adds: restarting the tick/timer loop on deadline change and
-// triggering showResults() on status:"finished".
+// Reconciles local state from a Firestore room snapshot - the single point
+// every online state change flows through (answers, timeouts, forfeits all
+// just write to Firestore and let this react), reusing the exact same
+// render functions (updateGameStats/renderFoundChips) local mode uses.
 function applyRoomSnapshot(data) {
   if (!data || !state || !state.online) return;
+
+  const deadlineChanged = data.slotDeadline !== state.slotDeadline;
+
   state.found = data.found || [];
   state.remaining = new Set(computeRemaining(state.answers, state.found));
   state.players = {
@@ -382,8 +391,30 @@ function applyRoomSnapshot(data) {
   };
   state.turn = data.turn;
   state.consecutiveMisses = data.consecutiveMisses || 0;
+  state.slotDeadline = data.slotDeadline;
+  state.slotStart = data.slotDeadline != null ? data.slotDeadline - state.timeLimit * 1000 : null;
+  // Authoritative outcome from Firestore - needed because a forfeit can
+  // decide a winner independent of score (e.g. quitting a 0-0 match), which
+  // a client-side score comparison alone would get wrong.
+  state.winner = data.winner;
+
+  if (deadlineChanged) {
+    state._timeoutAttempted = false;
+  }
+
   updateGameStats();
   renderFoundChips();
+
+  if (data.status === "finished" && !state._finished) {
+    state._finished = true;
+    clearInterval(tickHandle);
+    if (onlineRoomUnsubscribe) {
+      onlineRoomUnsubscribe();
+      onlineRoomUnsubscribe = null;
+    }
+    state.missed = [...state.remaining];
+    showResults();
+  }
 }
 
 function startGame(catIndex, mode, lang) {
@@ -432,13 +463,21 @@ function switchTurn() {
 
 function updateGameStats() {
   el("found-count").textContent = state.found.length;
+  el("answer-input").disabled = false; // only the online branch below re-disables it
   if (state.mode === "versus") {
     el("p1-score").textContent = state.players[1].score;
     el("p2-score").textContent = state.players[2].score;
     el("p1-box").classList.toggle("active", state.turn === 1);
     el("p2-box").classList.toggle("active", state.turn === 2);
-    el("turn-indicator").textContent = `Player ${state.turn}'s turn`;
-    el("answer-input").placeholder = `Player ${state.turn}, your answer...`;
+    if (state.online) {
+      const myTurn = state.turn === state.myPlayer;
+      el("turn-indicator").textContent = myTurn ? "Your turn!" : `Waiting for Player ${state.turn}...`;
+      el("answer-input").placeholder = myTurn ? "Your answer..." : "Waiting for opponent...";
+      el("answer-input").disabled = !myTurn;
+    } else {
+      el("turn-indicator").textContent = `Player ${state.turn}'s turn`;
+      el("answer-input").placeholder = `Player ${state.turn}, your answer...`;
+    }
   } else {
     el("live-score").textContent = state.score;
     el("answer-input").placeholder = "Type an answer...";
@@ -477,7 +516,10 @@ function nextSlot() {
 }
 
 function tick() {
-  const now = performance.now();
+  // Online matches share a deadline across two machines, so it has to be
+  // measured against a clock both agree on (epoch ms); performance.now()
+  // is only meaningful within a single page's lifetime.
+  const now = state.online ? Date.now() : performance.now();
   const remainingMs = state.slotDeadline - now;
   const frac = Math.max(0, remainingMs / (state.timeLimit * 1000));
   const fill = el("timer-fill");
@@ -486,8 +528,15 @@ function tick() {
   fill.classList.toggle("danger", frac <= 0.2);
 
   if (remainingMs <= 0) {
-    clearInterval(tickHandle);
-    state.online ? handleTimeoutOnline() : handleTimeoutLocal();
+    if (state.online) {
+      // Keep ticking - state._timeoutAttempted guards against spamming the
+      // same timeout write every 50ms while waiting for either client's
+      // write (or the opponent's answer) to land and push a new deadline.
+      handleTimeoutOnline();
+    } else {
+      clearInterval(tickHandle);
+      handleTimeoutLocal();
+    }
   }
 }
 
@@ -513,6 +562,18 @@ function handleTimeoutLocal() {
       endGame();
     }, 700);
   }
+}
+
+// Any client whose local clock thinks the deadline passed calls this - not
+// just whoever's turn it is - so a backgrounded/throttled tab can't stall
+// the match. Firestore's transaction (not this client) adjudicates who
+// actually resolves it; see online.js writeTimeout.
+function handleTimeoutOnline() {
+  if (state._timeoutAttempted) return;
+  state._timeoutAttempted = true;
+  Online.writeTimeout(state.roomCode, state.turn, state.slotDeadline).catch(err => {
+    console.error("writeTimeout failed", err);
+  });
 }
 
 function submitAnswer(raw) {
@@ -569,6 +630,38 @@ function submitAnswerLocal(raw) {
   }
 }
 
+// Does NOT mutate state directly - writes to Firestore and waits for the
+// snapshot round-trip (applyRoomSnapshot) to reflect the result, the same
+// single reconciliation point every other online state change goes through.
+function submitAnswerOnline(raw) {
+  if (!state || state.remaining.size === 0) return;
+  if (state.turn !== state.myPlayer) {
+    setFeedback("Wait for your turn!", "neutral");
+    flashShake();
+    return;
+  }
+  const norm = normalize(raw);
+  if (!norm) return;
+
+  const canonical = state.answerKey.get(norm);
+
+  if (canonical && state.remaining.has(canonical)) {
+    const elapsed = (Date.now() - state.slotStart) / 1000;
+    const timeTaken = Math.min(elapsed, state.timeLimit);
+    const bonus = Math.round(MAX_BONUS * (1 - timeTaken / state.timeLimit));
+    const isLastAnswer = state.remaining.size === 1;
+    el("answer-input").value = "";
+    Online.writeCorrectAnswer(state.roomCode, state.myPlayer, canonical, timeTaken, BASE_POINTS, bonus, isLastAnswer)
+      .catch(err => console.error("writeCorrectAnswer failed", err));
+  } else if (canonical && !state.remaining.has(canonical)) {
+    setFeedback("Already found that one.", "neutral");
+    flashShake();
+  } else {
+    setFeedback("Not a match, try again.", "bad");
+    flashShake();
+  }
+}
+
 function flashShake() {
   const input = el("answer-input");
   input.classList.remove("shake");
@@ -603,11 +696,17 @@ function showResults() {
     [...p1Boxes, ...p2Boxes].forEach(box => box.classList.remove("winner", "loser"));
 
     const banner = el("winner-banner");
-    if (p1.score > p2.score) {
+    // Online matches use Firestore's authoritative winner (set by the CAS
+    // transactions or a forfeit) rather than recomputing from score, since a
+    // forfeit can decide a winner independent of score (e.g. quitting a 0-0
+    // match) - a score comparison alone would get that case wrong. Local
+    // hot-seat versus has no such concept, so it keeps comparing scores.
+    const winner = state.online ? state.winner : (p1.score > p2.score ? 1 : p2.score > p1.score ? 2 : "tie");
+    if (winner === 1) {
       banner.textContent = "Player 1 Wins!";
       p1Boxes.forEach(box => box.classList.add("winner"));
       p2Boxes.forEach(box => box.classList.add("loser"));
-    } else if (p2.score > p1.score) {
+    } else if (winner === 2) {
       banner.textContent = "Player 2 Wins!";
       p2Boxes.forEach(box => box.classList.add("winner"));
       p1Boxes.forEach(box => box.classList.add("loser"));
@@ -615,13 +714,17 @@ function showResults() {
       banner.textContent = "It's a Tie!";
     }
 
-    const bestOfMatch = Math.max(p1.score, p2.score);
-    const isNewHigh = saveHighScoreIfBetter(state.highScoreKey, bestOfMatch);
+    // Online: each device only credits its own player's result - Math.max
+    // would otherwise silently credit this device with the opponent's score
+    // if they won (local hot-seat is fine with Math.max since both
+    // "players" share one device/localStorage).
+    const myScore = state.online ? state.players[state.myPlayer].score : Math.max(p1.score, p2.score);
+    const isNewHigh = saveHighScoreIfBetter(state.highScoreKey, myScore);
     el("res-versus-highscore").textContent = getHighScore(state.highScoreKey);
     el("versus-new-high-badge").classList.toggle("hidden", !isNewHigh);
 
-    const bestCorrectOfMatch = Math.max(p1.correct, p2.correct);
-    const isNewMostAnswered = saveMostAnsweredIfBetter(state.highScoreKey, bestCorrectOfMatch);
+    const myCorrect = state.online ? state.players[state.myPlayer].correct : Math.max(p1.correct, p2.correct);
+    const isNewMostAnswered = saveMostAnsweredIfBetter(state.highScoreKey, myCorrect);
     el("res-versus-most-answered").textContent = getMostAnswered(state.highScoreKey);
     el("versus-new-most-answered-badge").classList.toggle("hidden", !isNewMostAnswered);
   } else {
@@ -660,6 +763,12 @@ function showResults() {
   } else {
     missedWrap.classList.add("hidden");
   }
+
+  // Online matches keep state.mode === "versus" (never a 3rd mode value),
+  // so without this guard "Play Again" would silently start a *local*
+  // hot-seat game using the online match's category - hide it instead.
+  el("replay-btn").classList.toggle("hidden", state.online === true);
+
   showScreen("results");
 }
 
@@ -670,7 +779,19 @@ el("answer-form").addEventListener("submit", (e) => {
 });
 
 el("quit-btn").addEventListener("click", () => {
-  endGame();
+  if (state.online && state.roomCode) {
+    // Don't call endGame() directly here - forfeiting writes status:
+    // "finished" to Firestore, and the resulting snapshot flows through
+    // applyRoomSnapshot for both players (the single reconciliation point
+    // every online state change goes through), rather than ending the
+    // match locally with stale state before the write lands.
+    clearInterval(tickHandle);
+    Online.forfeitMatch(state.roomCode, state.myPlayer).catch(err => {
+      console.error("forfeitMatch failed", err);
+    });
+  } else {
+    endGame();
+  }
 });
 
 el("replay-btn").addEventListener("click", () => {
