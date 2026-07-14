@@ -11,16 +11,21 @@ service cloud.firestore {
       // Anyone with the room code can look up/join a room.
       allow get: if true;
 
+      // NOTE: players is keyed by "1"/"2" as STRINGS - the JS object literal
+      // {1: {...}, 2: null} serializes to a Firestore map with string keys
+      // (JS coerces numeric object keys to strings), so these must be
+      // quoted string-literal keys, not bare integers, or the lookup silently
+      // fails to match and every request gets denied.
       allow create: if request.auth != null
-                    && request.resource.data.players[1].uid == request.auth.uid
+                    && request.resource.data.players['1'].uid == request.auth.uid
                     && request.resource.data.status == 'waiting';
 
       allow update: if request.auth != null
-                    && (request.auth.uid == resource.data.players[1].uid
-                        || (resource.data.players[2] != null
-                            && request.auth.uid == resource.data.players[2].uid)
+                    && (request.auth.uid == resource.data.players['1'].uid
+                        || (resource.data.players['2'] != null
+                            && request.auth.uid == resource.data.players['2'].uid)
                         // Allows the joining player's write to claim player 2.
-                        || resource.data.players[2] == null);
+                        || resource.data.players['2'] == null);
 
       // Rely on the Firestore TTL policy (see README) for cleanup, not
       // client-initiated deletes.

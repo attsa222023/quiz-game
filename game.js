@@ -55,6 +55,10 @@ let tickHandle = null;
 let selectedMode = "solo";
 let selectedTimeLimit = DEFAULT_TIME_LIMIT;
 let selectedGroup = null;
+let onlineSubMode = null; // null | "create" | "join"
+let onlineRoomCode = null;
+let onlineMyPlayer = null;
+let onlineRoomUnsubscribe = null;
 const GROUP_ORDER = ["Geography", "Chemistry", "Sports", "Entertainment"];
 
 /* ---------------- Elements ---------------- */
@@ -63,6 +67,7 @@ const screens = {
   menu: el("menu-screen"),
   game: el("game-screen"),
   results: el("results-screen"),
+  online: el("online-screen"),
 };
 
 function showScreen(name) {
@@ -127,7 +132,13 @@ function renderCategoryList() {
         </div>
       `;
       card.querySelectorAll(".lang-btn").forEach(langBtn => {
-        langBtn.addEventListener("click", () => startGame(idx, selectedMode, langBtn.dataset.lang));
+        langBtn.addEventListener("click", () => {
+          if (selectedMode === "online") {
+            createOnlineRoom(idx, langBtn.dataset.lang);
+          } else {
+            startGame(idx, selectedMode, langBtn.dataset.lang);
+          }
+        });
       });
       list.appendChild(card);
       return;
@@ -136,7 +147,13 @@ function renderCategoryList() {
     const btn = document.createElement("button");
     btn.className = "cat-btn";
     btn.innerHTML = `${cat.name}<span class="count">${cat.answers.length} answers &middot; ${selectedTimeLimit}s per answer &middot; High Score: ${getHighScore(cat.name)} &middot; Most Answered: ${getMostAnswered(cat.name)}</span>`;
-    btn.addEventListener("click", () => startGame(idx, selectedMode));
+    btn.addEventListener("click", () => {
+      if (selectedMode === "online") {
+        createOnlineRoom(idx, undefined);
+      } else {
+        startGame(idx, selectedMode);
+      }
+    });
     list.appendChild(btn);
   });
 }
@@ -145,11 +162,64 @@ el("group-back-btn").addEventListener("click", () => {
   renderMenu();
 });
 
+// Shows/hides the online create-vs-join choice and the local category
+// picker depending on the selected mode, reusing renderMenu()'s existing
+// group/category rendering unchanged for both local modes and the online
+// "create" sub-mode (the category picker is identical either way).
+function renderModeArea() {
+  const isOnline = selectedMode === "online";
+  el("online-mode-choice").classList.toggle("hidden", !isOnline || onlineSubMode !== null);
+  el("online-join-form").classList.toggle("hidden", !(isOnline && onlineSubMode === "join"));
+  el("online-error").classList.add("hidden");
+
+  const showCategoryPicker = !isOnline || onlineSubMode === "create";
+  if (showCategoryPicker) {
+    renderMenu();
+  } else {
+    el("group-list").classList.add("hidden");
+    el("cat-list-wrap").classList.add("hidden");
+  }
+}
+
 document.querySelectorAll("#mode-toggle .mode-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     selectedMode = btn.dataset.mode;
+    onlineSubMode = null;
     document.querySelectorAll("#mode-toggle .mode-btn").forEach(b => b.classList.toggle("active", b === btn));
+    renderModeArea();
   });
+});
+
+el("online-create-btn").addEventListener("click", () => {
+  onlineSubMode = "create";
+  renderModeArea();
+});
+
+el("online-join-btn").addEventListener("click", () => {
+  onlineSubMode = "join";
+  renderModeArea();
+});
+
+el("join-code-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const code = el("join-code-input").value.trim().toUpperCase();
+  if (!code) return;
+  joinOnlineRoomFlow(code);
+});
+
+el("online-back-btn").addEventListener("click", () => {
+  if (onlineRoomUnsubscribe) {
+    onlineRoomUnsubscribe();
+    onlineRoomUnsubscribe = null;
+  }
+  onlineSubMode = null;
+  renderModeArea();
+  showScreen("menu");
+});
+
+el("copy-code-btn").addEventListener("click", () => {
+  if (!onlineRoomCode) return;
+  navigator.clipboard?.writeText(onlineRoomCode).catch(() => {});
 });
 
 el("time-slider").addEventListener("input", () => {
@@ -203,6 +273,117 @@ function highScoreKeyFor(cat, lang) {
 function computeRemaining(answers, found) {
   const foundNames = new Set(found.map(f => f.name));
   return answers.filter(a => !foundNames.has(a));
+}
+
+/* ---------------- Online versus ---------------- */
+async function createOnlineRoom(catIndex, lang) {
+  el("online-error").classList.add("hidden");
+  if (!window.Online) {
+    el("online-error").textContent = "Online play isn't available right now.";
+    el("online-error").classList.remove("hidden");
+    return;
+  }
+  try {
+    const result = await Online.createRoom(catIndex, lang, selectedTimeLimit);
+    onlineRoomCode = result.roomCode;
+    onlineMyPlayer = 1;
+    el("room-code-display").textContent = result.roomCode;
+    showScreen("online");
+    onlineRoomUnsubscribe = Online.subscribeToRoom(result.roomCode, handleLobbySnapshot);
+  } catch (err) {
+    el("online-error").textContent = err.message || "Could not create a match.";
+    el("online-error").classList.remove("hidden");
+  }
+}
+
+async function joinOnlineRoomFlow(code) {
+  el("online-error").classList.add("hidden");
+  if (!window.Online) {
+    el("online-error").textContent = "Online play isn't available right now.";
+    el("online-error").classList.remove("hidden");
+    return;
+  }
+  try {
+    const result = await Online.joinRoom(code);
+    onlineRoomCode = result.roomCode;
+    onlineMyPlayer = 2;
+    startOnlineGame(result.roomData);
+  } catch (err) {
+    el("online-error").textContent = err.message || "Could not join that room.";
+    el("online-error").classList.remove("hidden");
+  }
+}
+
+// Watches a room while sitting in the "waiting for opponent" lobby; once
+// player 2 joins (status flips to "active"), transitions into the game.
+function handleLobbySnapshot(data) {
+  if (data && data.status === "active") {
+    if (onlineRoomUnsubscribe) {
+      onlineRoomUnsubscribe();
+      onlineRoomUnsubscribe = null;
+    }
+    startOnlineGame(data);
+  }
+}
+
+function startOnlineGame(roomData) {
+  const cat = CATEGORIES[roomData.categoryIndex];
+  const lang = roomData.lang || undefined;
+  const source = resolveCategorySource(cat, lang);
+  state = {
+    cat,
+    lang,
+    mode: "versus",
+    online: true,
+    myPlayer: onlineMyPlayer,
+    roomCode: onlineRoomCode,
+    timeLimit: roomData.timeLimit,
+    highScoreKey: highScoreKeyFor(cat, lang),
+    answers: source.answers,
+    answerKey: buildAnswerKey(cat, lang),
+    remaining: new Set(computeRemaining(source.answers, roomData.found || [])),
+    found: roomData.found || [],
+    missed: [],
+    score: 0,
+    basePoints: 0,
+    bonusPoints: 0,
+    slotStart: null,
+    slotDeadline: roomData.slotDeadline,
+    turn: roomData.turn,
+    consecutiveMisses: roomData.consecutiveMisses || 0,
+    players: {
+      1: { ...roomData.players[1] },
+      2: { ...roomData.players[2] },
+    },
+  };
+  el("game-cat-name").textContent = cat.name;
+  el("total-count").textContent = source.answers.length;
+  el("solo-score-inline").classList.add("hidden");
+  el("versus-bar").classList.remove("hidden");
+  updateGameStats();
+  renderFoundChips();
+  showScreen("game");
+  setFeedback("Match started!", "neutral");
+
+  onlineRoomUnsubscribe = Online.subscribeToRoom(onlineRoomCode, applyRoomSnapshot);
+}
+
+// Reconciles local state from a Firestore room snapshot. Reuses the exact
+// same render functions (updateGameStats/renderFoundChips) local mode uses.
+// Phase 4 adds: restarting the tick/timer loop on deadline change and
+// triggering showResults() on status:"finished".
+function applyRoomSnapshot(data) {
+  if (!data || !state || !state.online) return;
+  state.found = data.found || [];
+  state.remaining = new Set(computeRemaining(state.answers, state.found));
+  state.players = {
+    1: { ...data.players[1] },
+    2: { ...data.players[2] },
+  };
+  state.turn = data.turn;
+  state.consecutiveMisses = data.consecutiveMisses || 0;
+  updateGameStats();
+  renderFoundChips();
 }
 
 function startGame(catIndex, mode, lang) {

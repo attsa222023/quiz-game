@@ -17,15 +17,40 @@
       <div class="mode-toggle" id="mode-toggle">
         <button class="mode-btn active" data-mode="solo" type="button">Solo Play</button>
         <button class="mode-btn" data-mode="versus" type="button">2-Player Versus</button>
+        <button class="mode-btn" data-mode="online" type="button">Online Versus</button>
       </div>
       <div class="time-control">
         <label for="time-slider">Time per Answer: <span id="time-value">10</span>s</label>
         <input type="range" id="time-slider" min="3" max="30" step="1" value="10" />
       </div>
+      <div id="online-mode-choice" class="hidden">
+        <div class="lang-buttons">
+          <button type="button" class="lang-btn" id="online-create-btn">Create Match</button>
+          <button type="button" class="lang-btn" id="online-join-btn">Join Match</button>
+        </div>
+      </div>
+      <div id="online-join-form" class="hidden">
+        <form id="join-code-form" autocomplete="off">
+          <input type="text" id="join-code-input" placeholder="Enter room code" maxlength="5" />
+          <button type="submit">Join</button>
+        </form>
+      </div>
+      <div class="feedback bad hidden" id="online-error"></div>
       <div class="cat-list" id="group-list"></div>
       <div id="cat-list-wrap" class="hidden">
         <button class="secondary back-btn" id="group-back-btn" type="button">&larr; Back to Groups</button>
         <div class="cat-list" id="cat-list"></div>
+      </div>
+    </section>
+
+    <!-- ONLINE LOBBY SCREEN -->
+    <section id="online-screen" class="hidden">
+      <h1 tabindex="-1">Waiting for Opponent</h1>
+      <p class="subtitle">Share this code with your opponent to start the match.</p>
+      <div class="room-code-display" id="room-code-display">-----</div>
+      <button class="secondary" id="copy-code-btn" type="button">Copy Code</button>
+      <div class="footer-row">
+        <button class="secondary" id="online-back-btn" type="button">&larr; Back to Menu</button>
       </div>
     </section>
 
