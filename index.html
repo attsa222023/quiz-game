@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Name Them All!</title>
+<style>
+  :root {
+    --bg: #14171f;
+    --panel: #1e2230;
+    --panel-2: #262b3d;
+    --accent: #4f9dff;
+    --accent2: #ff8a3d;
+    --good: #3ddc84;
+    --bad: #ff5d5d;
+    --text: #eef1f8;
+    --muted: #8891a7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(circle at top, #1c2130 0%, #0f1119 100%);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .app {
+    width: 100%;
+    max-width: 640px;
+  }
+  .card {
+    background: var(--panel);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+  h1 {
+    margin: 0 0 4px;
+    font-size: 28px;
+  }
+  .subtitle {
+    color: var(--muted);
+    margin: 0 0 28px;
+    font-size: 14px;
+  }
+  /* --- Menu screen --- */
+  .cat-list {
+    display: grid;
+    gap: 12px;
+  }
+  .cat-btn {
+    background: var(--panel-2);
+    border: 1px solid transparent;
+    border-radius: 12px;
+    padding: 16px 18px;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    font-size: 16px;
+    transition: border-color .15s, transform .15s;
+  }
+  .cat-btn:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .cat-btn .count {
+    display: block;
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+  .lang-cat {
+    cursor: default;
+  }
+  .lang-cat-name {
+    font-weight: 600;
+    font-size: 16px;
+  }
+  .lang-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .lang-btn {
+    flex: 1;
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .lang-btn:hover {
+    background: rgba(79,157,255,0.15);
+  }
+  .mode-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .mode-btn {
+    flex: 1;
+    background: var(--panel-2);
+    color: var(--muted);
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .mode-btn.active {
+    color: var(--text);
+    border-color: var(--accent);
+    background: rgba(79,157,255,0.12);
+  }
+  .time-control {
+    margin-bottom: 20px;
+  }
+  .back-btn {
+    margin-bottom: 12px;
+  }
+  .time-control label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .time-control label span {
+    color: var(--text);
+    font-weight: 600;
+  }
+  input[type=range] {
+    width: 100%;
+    height: 6px;
+    border-radius: 6px;
+    background: var(--panel-2);
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent);
+    cursor: pointer;
+  }
+  /* --- Game screen --- */
+  .top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .cat-name {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .stat {
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .versus-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .player-box {
+    flex: 1;
+    background: var(--panel-2);
+    border-radius: 10px;
+    padding: 10px 14px;
+    text-align: center;
+    border: 2px solid transparent;
+    transition: border-color .2s;
+  }
+  .player-box.active.p1 { border-color: var(--accent); }
+  .player-box.active.p2 { border-color: var(--accent2); }
+  .player-box .p-label { font-size: 12px; color: var(--muted); }
+  .player-box .p-score { font-size: 20px; font-weight: 700; margin-top: 2px; }
+  .turn-indicator {
+    font-size: 13px;
+    color: var(--muted);
+    white-space: nowrap;
+    padding: 0 4px;
+  }
+  .timer-track {
+    width: 100%;
+    height: 10px;
+    background: var(--panel-2);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 18px 0 22px;
+  }
+  .timer-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 100%;
+    transition: width .1s linear, background-color .3s;
+  }
+  .timer-fill.warn { background: #ffb84f; }
+  .timer-fill.danger { background: var(--bad); }
+  form { display: flex; gap: 10px; }
+  input[type=text] {
+    flex: 1;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border: 2px solid var(--panel-2);
+    background: var(--panel-2);
+    color: var(--text);
+    font-size: 17px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  input[type=text]:focus { border-color: var(--accent); }
+  input[type=text].shake {
+    border-color: var(--bad);
+    animation: shake .3s;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+  button {
+    background: var(--accent);
+    color: #0b0e15;
+    border: none;
+    border-radius: 10px;
+    padding: 0 22px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.secondary {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--panel-2);
+  }
+  .feedback {
+    min-height: 22px;
+    margin-top: 12px;
+    font-size: 14px;
+  }
+  .feedback.good { color: var(--good); }
+  .feedback.bad { color: var(--bad); }
+  .feedback.neutral { color: var(--muted); }
+  .found-wrap {
+    margin-top: 24px;
+  }
+  .found-title {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 140px;
+    overflow-y: auto;
+  }
+  .chip {
+    background: var(--panel-2);
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 13px;
+  }
+  .chip.p1 { border: 1px solid var(--accent); }
+  .chip.p2 { border: 1px solid var(--accent2); }
+  .footer-row {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+  }
+  /* --- Results screen --- */
+  .score-big {
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 4px 0 2px;
+  }
+  .results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 24px 0;
+  }
+  .result-box {
+    background: var(--panel-2);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .result-box .label {
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .result-box .value {
+    font-size: 20px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  .missed-list {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+  }
+  .winner-banner {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 4px 0 20px;
+    color: var(--good);
+  }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="card">
+
+    <!-- MENU SCREEN -->
+    <section id="menu-screen">
+      <h1>Name Them All!</h1>
+      <p class="subtitle">Pick a category. Answer as many as you can, as fast as you can &mdash; each one has a timer.</p>
+      <div class="mode-toggle" id="mode-toggle">
+        <button class="mode-btn active" data-mode="solo" type="button">Solo Play</button>
+        <button class="mode-btn" data-mode="versus" type="button">2-Player Versus</button>
+      </div>
+      <div class="time-control">
+        <label for="time-slider">Time per Answer: <span id="time-value">10</span>s</label>
+        <input type="range" id="time-slider" min="3" max="30" step="1" value="10" />
+      </div>
+      <div class="cat-list" id="group-list"></div>
+      <div id="cat-list-wrap" class="hidden">
+        <button class="secondary back-btn" id="group-back-btn" type="button">&larr; Back to Groups</button>
+        <div class="cat-list" id="cat-list"></div>
+      </div>
+    </section>
+
+    <!-- GAME SCREEN -->
+    <section id="game-screen" class="hidden">
+      <div class="top-row">
+        <div class="cat-name" id="game-cat-name"></div>
+        <div class="stat"><span id="found-count">0</span>/<span id="total-count">0</span><span id="solo-score-inline"> &middot; Score: <span id="live-score">0</span></span></div>
+      </div>
+      <div class="versus-bar hidden" id="versus-bar">
+        <div class="player-box p1" id="p1-box">
+          <div class="p-label">Player 1</div>
+          <div class="p-score" id="p1-score">0</div>
+        </div>
+        <div class="turn-indicator" id="turn-indicator">Player 1's turn</div>
+        <div class="player-box p2" id="p2-box">
+          <div class="p-label">Player 2</div>
+          <div class="p-score" id="p2-score">0</div>
+        </div>
+      </div>
+      <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+      <form id="answer-form" autocomplete="off">
+        <input type="text" id="answer-input" placeholder="Type an answer..." />
+        <button type="submit">Enter</button>
+      </form>
+      <div class="feedback neutral" id="feedback"></div>
+      <div class="found-wrap">
+        <div class="found-title">Found so far</div>
+        <div class="chips" id="found-chips"></div>
+      </div>
+      <div class="footer-row">
+        <button class="secondary" id="quit-btn" type="button">End Quiz</button>
+      </div>
+    </section>
+
+    <!-- RESULTS SCREEN -->
+    <section id="results-screen" class="hidden">
+      <h1>Results</h1>
+
+      <div id="solo-results">
+        <div class="score-big" id="final-score">0</div>
+        <p class="subtitle">Final Score</p>
+        <div class="feedback good hidden" id="new-high-badge">New High Score!</div>
+        <div class="feedback good hidden" id="new-most-answered-badge">New Most Answered Record!</div>
+        <div class="results-grid">
+          <div class="result-box">
+            <div class="label">Correct</div>
+            <div class="value" id="res-correct">0 / 0</div>
+          </div>
+          <div class="result-box">
+            <div class="label">Avg. Answer Time</div>
+            <div class="value" id="res-avg-time">0.0s</div>
+          </div>
+          <div class="result-box">
+            <div class="label">Speed Bonus</div>
+            <div class="value" id="res-bonus">0</div>
+          </div>
+          <div class="result-box">
+            <div class="label">Base Points</div>
+            <div class="value" id="res-base">0</div>
+          </div>
+          <div class="result-box">
+            <div class="label">High Score for this Category</div>
+            <div class="value" id="res-highscore">0</div>
+          </div>
+          <div class="result-box">
+            <div class="label">Most Answered in One Round</div>
+            <div class="value" id="res-most-answered">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="versus-results" class="hidden">
+        <div class="winner-banner" id="winner-banner">It's a Tie!</div>
+        <div class="feedback good hidden" id="versus-new-high-badge">New High Score!</div>
+        <div class="feedback good hidden" id="versus-new-most-answered-badge">New Most Answered Record!</div>
+        <div class="results-grid">
+          <div class="result-box">
+            <div class="label">Player 1 Score</div>
+            <div class="value" id="res-p1-score">0</div>
+          </div>
+          <div class="result-box">
+            <div class="label">Player 2 Score</div>
+            <div class="value" id="res-p2-score">0</div>
+          </div>
+          <div class="result-box">
+            <div class="label">Player 1 Correct</div>
+            <div class="value" id="res-p1-correct">0</div>
+          </div>
+          <div class="result-box">
+            <div class="label">Player 2 Correct</div>
+            <div class="value" id="res-p2-correct">0</div>
+          </div>
+          <div class="result-box">
+            <div class="label">High Score for this Category</div>
+            <div class="value" id="res-versus-highscore">0</div>
+          </div>
+          <div class="result-box">
+            <div class="label">Most Answered in One Round</div>
+            <div class="value" id="res-versus-most-answered">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="missed-wrap">
+        <button class="secondary" id="missed-toggle" type="button">Show Missed Answers</button>
+        <div class="found-wrap hidden" id="missed-reveal">
+          <div class="found-title">Missed</div>
+          <div class="missed-list" id="missed-list"></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="replay-btn" type="button">Play Again</button>
+        <button class="secondary" id="menu-btn" type="button">Back to Menu</button>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+/* ---------------- Data ---------------- */
+const CATEGORIES = [
+  {
+    name: "Countries in the European Union",
+    group: "Geography",
+    answers: [
+      "Austria","Belgium","Bulgaria","Croatia","Cyprus","Czech Republic","Denmark","Estonia",
+      "Finland","France","Germany","Greece","Hungary","Ireland","Italy","Latvia","Lithuania",
+      "Luxembourg","Malta","Netherlands","Poland","Portugal","Romania","Slovakia","Slovenia",
+      "Spain","Sweden"
+    ]
+  },
+  {
+    name: "G20 Member Countries",
+    group: "Geography",
+    answers: [
+      "Argentina","Australia","Brazil","Canada","China","France","Germany","India","Indonesia",
+      "Italy","Japan","Mexico","Russia","Saudi Arabia","South Africa","South Korea","Turkey",
+      "United Kingdom","United States","European Union"
+    ],
+    aliases: { "United States": ["USA","US","U.S.","America"], "United Kingdom": ["UK","U.K.","Britain"], "South Korea": ["Korea"] }
+  },
+  {
+    name: "US States Bordering the Pacific Ocean or Canada",
+    group: "Geography",
+    answers: [
+      "Washington","Oregon","California","Alaska","Hawaii","Idaho","Montana","North Dakota",
+      "Minnesota","Michigan","New York","Vermont","New Hampshire","Maine"
+    ]
+  },
+  {
+    name: "All 50 US States",
+    group: "Geography",
+    answers: [
+      "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware",
+      "Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky",
+      "Louisiana","Maine","Maryland","Massachusetts","Michigan","Minnesota","Mississippi",
+      "Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey","New Mexico",
+      "New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania",
+      "Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont",
+      "Virginia","Washington","West Virginia","Wisconsin","Wyoming"
+    ]
+  },
+  {
+    name: "Japan Prefectures",
+    group: "Geography",
+    languages: {
+      en: {
+        answers: [
+          "Hokkaido","Aomori","Iwate","Miyagi","Akita","Yamagata","Fukushima","Ibaraki","Tochigi",
+          "Gunma","Saitama","Chiba","Tokyo","Kanagawa","Niigata","Toyama","Ishikawa","Fukui",
+          "Yamanashi","Nagano","Gifu","Shizuoka","Aichi","Mie","Shiga","Kyoto","Osaka","Hyogo",
+          "Nara","Wakayama","Tottori","Shimane","Okayama","Hiroshima","Yamaguchi","Tokushima",
+          "Kagawa","Ehime","Kochi","Fukuoka","Saga","Nagasaki","Kumamoto","Oita","Miyazaki",
+          "Kagoshima","Okinawa"
+        ]
+      },
+      ja: {
+        answers: [
+          "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県","茨城県","栃木県",
+          "群馬県","埼玉県","千葉県","東京都","神奈川県","新潟県","富山県","石川県","福井県",
+          "山梨県","長野県","岐阜県","静岡県","愛知県","三重県","滋賀県","京都府","大阪府","兵庫県",
+          "奈良県","和歌山県","鳥取県","島根県","岡山県","広島県","山口県","徳島県",
+          "香川県","愛媛県","高知県","福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県",
+          "鹿児島県","沖縄県"
+        ],
+        aliases: {
+          "青森県": ["青森"], "岩手県": ["岩手"], "宮城県": ["宮城"], "秋田県": ["秋田"],
+          "山形県": ["山形"], "福島県": ["福島"], "茨城県": ["茨城"], "栃木県": ["栃木"],
+          "群馬県": ["群馬"], "埼玉県": ["埼玉"], "千葉県": ["千葉"], "東京都": ["東京"],
+          "神奈川県": ["神奈川"], "新潟県": ["新潟"], "富山県": ["富山"], "石川県": ["石川"],
+          "福井県": ["福井"], "山梨県": ["山梨"], "長野県": ["長野"], "岐阜県": ["岐阜"],
+          "静岡県": ["静岡"], "愛知県": ["愛知"], "三重県": ["三重"], "滋賀県": ["滋賀"],
+          "京都府": ["京都"], "大阪府": ["大阪"], "兵庫県": ["兵庫"], "奈良県": ["奈良"],
+          "和歌山県": ["和歌山"], "鳥取県": ["鳥取"], "島根県": ["島根"], "岡山県": ["岡山"],
+          "広島県": ["広島"], "山口県": ["山口"], "徳島県": ["徳島"], "香川県": ["香川"],
+          "愛媛県": ["愛媛"], "高知県": ["高知"], "福岡県": ["福岡"], "佐賀県": ["佐賀"],
+          "長崎県": ["長崎"], "熊本県": ["熊本"], "大分県": ["大分"], "宮崎県": ["宮崎"],
+          "鹿児島県": ["鹿児島"], "沖縄県": ["沖縄"]
+        }
+      }
+    }
+  },
+  {
+    name: "Elements in the First 20 (Periodic Table)",
+    group: "Chemistry",
+    answers: [
+      "Hydrogen","Helium","Lithium","Beryllium","Boron","Carbon","Nitrogen","Oxygen","Fluorine",
+      "Neon","Sodium","Magnesium","Aluminium","Silicon","Phosphorus","Sulfur","Chlorine","Argon",
+      "Potassium","Calcium"
+    ],
+    aliases: { "Aluminium": ["Aluminum"], "Sulfur": ["Sulphur"] }
+  },
+  {
+    name: "Countries that have Qualified for the FIFA World Cup",
+    group: "Sports",
+    answers: [
+      "Brazil","Germany","Argentina","Italy","Mexico","Spain","England","France","Belgium","Uruguay",
+      "Switzerland","Sweden","Serbia","South Korea","United States","Netherlands","Russia","Czech Republic",
+      "Portugal","Scotland","Paraguay","Hungary","Poland","Slovakia","Chile","Japan","Cameroon","Austria",
+      "Australia","Croatia","Iran","Saudi Arabia","Bulgaria","Morocco","Tunisia","Colombia","Romania",
+      "Costa Rica","Nigeria","Denmark","Ghana","Ecuador","Algeria","Peru","Senegal","Ivory Coast","Norway",
+      "South Africa","Egypt","Turkey","Canada","Northern Ireland","Honduras","Republic of Ireland","Greece",
+      "New Zealand","Bolivia","DR Congo","Qatar","Haiti","Bosnia and Herzegovina","Panama","Iraq","Wales",
+      "North Korea","El Salvador","Slovenia","Cuba","Indonesia","Israel","East Germany","Kuwait",
+      "United Arab Emirates","Jamaica","China","Angola","Togo","Trinidad and Tobago","Ukraine","Iceland",
+      "Cape Verde","Curaçao","Jordan","Uzbekistan"
+    ],
+    aliases: {
+      "United States": ["USA","US","U.S.","America"],
+      "South Korea": ["Korea","Korea Republic","Republic of Korea"],
+      "North Korea": ["DPRK","Korea DPR"],
+      "DR Congo": ["Democratic Republic of Congo","Democratic Republic of the Congo","DRC","Congo DR","Zaire"],
+      "Czech Republic": ["Czechia"],
+      "Russia": ["USSR","Soviet Union"],
+      "Serbia": ["Yugoslavia"],
+      "Germany": ["West Germany"],
+      "Republic of Ireland": ["Ireland"],
+      "Ivory Coast": ["Cote d'Ivoire","Cote dIvoire"],
+      "United Arab Emirates": ["UAE"],
+      "Curaçao": ["Curacao"],
+      "Bosnia and Herzegovina": ["Bosnia"]
+    }
+  },
+  {
+    name: "MLB Teams",
+    group: "Sports",
+    answers: [
+      "Baltimore Orioles","Boston Red Sox","New York Yankees","Tampa Bay Rays","Toronto Blue Jays",
+      "Chicago White Sox","Cleveland Guardians","Detroit Tigers","Kansas City Royals","Minnesota Twins",
+      "Houston Astros","Los Angeles Angels","Oakland Athletics","Seattle Mariners","Texas Rangers",
+      "Atlanta Braves","Miami Marlins","New York Mets","Philadelphia Phillies","Washington Nationals",
+      "Chicago Cubs","Cincinnati Reds","Milwaukee Brewers","Pittsburgh Pirates","St. Louis Cardinals",
+      "Arizona Diamondbacks","Colorado Rockies","Los Angeles Dodgers","San Diego Padres","San Francisco Giants"
+    ],
+    aliases: {
+      "Baltimore Orioles": ["Orioles"],
+      "Boston Red Sox": ["Red Sox"],
+      "New York Yankees": ["Yankees","NY Yankees"],
+      "Tampa Bay Rays": ["Rays"],
+      "Toronto Blue Jays": ["Blue Jays"],
+      "Chicago White Sox": ["White Sox"],
+      "Cleveland Guardians": ["Guardians"],
+      "Detroit Tigers": ["Tigers"],
+      "Kansas City Royals": ["Royals"],
+      "Minnesota Twins": ["Twins"],
+      "Houston Astros": ["Astros"],
+      "Los Angeles Angels": ["Angels","LA Angels","Anaheim Angels"],
+      "Oakland Athletics": ["Athletics","A's","As"],
+      "Seattle Mariners": ["Mariners"],
+      "Texas Rangers": ["Rangers"],
+      "Atlanta Braves": ["Braves"],
+      "Miami Marlins": ["Marlins"],
+      "New York Mets": ["Mets","NY Mets"],
+      "Philadelphia Phillies": ["Phillies"],
+      "Washington Nationals": ["Nationals","Nats"],
+      "Chicago Cubs": ["Cubs"],
+      "Cincinnati Reds": ["Reds"],
+      "Milwaukee Brewers": ["Brewers"],
+      "Pittsburgh Pirates": ["Pirates"],
+      "St. Louis Cardinals": ["Cardinals","Saint Louis Cardinals"],
+      "Arizona Diamondbacks": ["Diamondbacks","D-backs","Dbacks"],
+      "Colorado Rockies": ["Rockies"],
+      "Los Angeles Dodgers": ["Dodgers","LA Dodgers"],
+      "San Diego Padres": ["Padres"],
+      "San Francisco Giants": ["Giants","SF Giants"]
+    }
+  },
+  {
+    name: "NBA Teams",
+    group: "Sports",
+    answers: [
+      "Boston Celtics","Brooklyn Nets","New York Knicks","Philadelphia 76ers","Toronto Raptors",
+      "Chicago Bulls","Cleveland Cavaliers","Detroit Pistons","Indiana Pacers","Milwaukee Bucks",
+      "Atlanta Hawks","Charlotte Hornets","Miami Heat","Orlando Magic","Washington Wizards",
+      "Denver Nuggets","Minnesota Timberwolves","Oklahoma City Thunder","Portland Trail Blazers","Utah Jazz",
+      "Golden State Warriors","LA Clippers","Los Angeles Lakers","Phoenix Suns","Sacramento Kings",
+      "Dallas Mavericks","Houston Rockets","Memphis Grizzlies","New Orleans Pelicans","San Antonio Spurs"
+    ],
+    aliases: {
+      "Boston Celtics": ["Celtics"],
+      "Brooklyn Nets": ["Nets"],
+      "New York Knicks": ["Knicks","NY Knicks"],
+      "Philadelphia 76ers": ["76ers","Sixers"],
+      "Toronto Raptors": ["Raptors"],
+      "Chicago Bulls": ["Bulls"],
+      "Cleveland Cavaliers": ["Cavaliers","Cavs"],
+      "Detroit Pistons": ["Pistons"],
+      "Indiana Pacers": ["Pacers"],
+      "Milwaukee Bucks": ["Bucks"],
+      "Atlanta Hawks": ["Hawks"],
+      "Charlotte Hornets": ["Hornets"],
+      "Miami Heat": ["Heat"],
+      "Orlando Magic": ["Magic"],
+      "Washington Wizards": ["Wizards"],
+      "Denver Nuggets": ["Nuggets"],
+      "Minnesota Timberwolves": ["Timberwolves","Wolves"],
+      "Oklahoma City Thunder": ["Thunder","OKC Thunder"],
+      "Portland Trail Blazers": ["Trail Blazers","Blazers"],
+      "Utah Jazz": ["Jazz"],
+      "Golden State Warriors": ["Warriors"],
+      "LA Clippers": ["Clippers","Los Angeles Clippers"],
+      "Los Angeles Lakers": ["Lakers","LA Lakers"],
+      "Phoenix Suns": ["Suns"],
+      "Sacramento Kings": ["Kings"],
+      "Dallas Mavericks": ["Mavericks","Mavs"],
+      "Houston Rockets": ["Rockets"],
+      "Memphis Grizzlies": ["Grizzlies"],
+      "New Orleans Pelicans": ["Pelicans"],
+      "San Antonio Spurs": ["Spurs"]
+    }
+  },
+  {
+    name: "Active NBA All-Stars (2025-26)",
+    group: "Sports",
+    answers: [
+      "LeBron James","Kevin Durant","Stephen Curry","James Harden","Giannis Antetokounmpo","Anthony Davis",
+      "Paul George","Kyrie Irving","Damian Lillard","Russell Westbrook","Nikola Jokić","Joel Embiid",
+      "Kawhi Leonard","Donovan Mitchell","Jimmy Butler","DeMar DeRozan","Luka Dončić","Jayson Tatum",
+      "Karl-Anthony Towns","Devin Booker","Jaylen Brown","Al Horford","Kevin Love","Klay Thompson",
+      "Anthony Edwards","Shai Gilgeous-Alexander","Draymond Green","Pascal Siakam","Trae Young",
+      "Bam Adebayo","Bradley Beal","Jalen Brunson","Rudy Gobert","Khris Middleton","Julius Randle",
+      "Domantas Sabonis","Scottie Barnes","Cade Cunningham","Andre Drummond","De'Aaron Fox",
+      "Darius Garland","Tyrese Haliburton","Jrue Holiday","Brandon Ingram","Jaren Jackson Jr.",
+      "Zach LaVine","Tyrese Maxey","Ja Morant","Alperen Şengün","Nikola Vučević","Victor Wembanyama",
+      "Zion Williamson","Jarrett Allen","Deni Avdija","LaMelo Ball","Paolo Banchero","Mike Conley",
+      "Jalen Duren","Tyler Herro","Chet Holmgren","Jalen Johnson","DeAndre Jordan","Brook Lopez",
+      "Lauri Markkanen","Evan Mobley","Dejounte Murray","Jamal Murray","Kristaps Porziņģis",
+      "Norman Powell","D'Angelo Russell","Fred VanVleet","Andrew Wiggins","Jalen Williams"
+    ],
+    aliases: {
+      "LeBron James": ["LeBron"],
+      "Giannis Antetokounmpo": ["Giannis"],
+      "Nikola Jokić": ["Nikola Jokic","Jokic"],
+      "Luka Dončić": ["Luka Doncic","Doncic"],
+      "Karl-Anthony Towns": ["KAT"],
+      "Shai Gilgeous-Alexander": ["SGA"],
+      "Alperen Şengün": ["Alperen Sengun","Sengun"],
+      "Nikola Vučević": ["Nikola Vucevic","Vucevic"],
+      "Kristaps Porziņģis": ["Kristaps Porzingis","Porzingis"],
+      "Jaren Jackson Jr.": ["Jaren Jackson"]
+    }
+  },
+  {
+    name: "Pixar Feature Films",
+    group: "Entertainment",
+    answers: [
+      "Toy Story","A Bug's Life","Toy Story 2","Monsters, Inc.","Finding Nemo","The Incredibles",
+      "Cars","Ratatouille","WALL-E","Up","Toy Story 3","Cars 2","Brave","Monsters University",
+      "Inside Out","The Good Dinosaur","Finding Dory","Cars 3","Coco","Incredibles 2","Toy Story 4",
+      "Onward","Soul","Luca","Turning Red","Lightyear","Elemental","Inside Out 2","Elio"
+    ],
+    aliases: {
+      "Monsters, Inc.": ["Monsters Inc"],
+      "WALL-E": ["Wall-E","Walle"]
+    }
+  },
+  {
+    name: "Best Picture Oscar Winners (1927-2025)",
+    group: "Entertainment",
+    answers: [
+      "Wings","The Broadway Melody","All Quiet on the Western Front","Cimarron","Grand Hotel",
+      "Cavalcade","It Happened One Night","Mutiny on the Bounty","The Great Ziegfeld",
+      "The Life of Emile Zola","You Can't Take It with You","Gone with the Wind","Rebecca",
+      "How Green Was My Valley","Mrs. Miniver","Casablanca","Going My Way","The Lost Weekend",
+      "The Best Years of Our Lives","Gentleman's Agreement","Hamlet","All the King's Men",
+      "All About Eve","An American in Paris","The Greatest Show on Earth","From Here to Eternity",
+      "On the Waterfront","Marty","Around the World in 80 Days","The Bridge on the River Kwai",
+      "Gigi","Ben-Hur","The Apartment","West Side Story","Lawrence of Arabia","Tom Jones",
+      "My Fair Lady","The Sound of Music","A Man for All Seasons","In the Heat of the Night",
+      "Oliver!","Midnight Cowboy","Patton","The French Connection","The Godfather","The Sting",
+      "The Godfather Part II","One Flew Over the Cuckoo's Nest","Rocky","Annie Hall",
+      "The Deer Hunter","Kramer vs. Kramer","Ordinary People","Chariots of Fire","Gandhi",
+      "Terms of Endearment","Amadeus","Out of Africa","Platoon","The Last Emperor","Rain Man",
+      "Driving Miss Daisy","Dances with Wolves","The Silence of the Lambs","Unforgiven",
+      "Schindler's List","Forrest Gump","Braveheart","The English Patient","Titanic",
+      "Shakespeare in Love","American Beauty","Gladiator","A Beautiful Mind","Chicago",
+      "The Lord of the Rings: The Return of the King","Million Dollar Baby","Crash",
+      "The Departed","No Country for Old Men","Slumdog Millionaire","The Hurt Locker",
+      "The King's Speech","The Artist","Argo","12 Years a Slave","Birdman","Spotlight",
+      "Moonlight","The Shape of Water","Green Book","Parasite","Nomadland","CODA",
+      "Everything Everywhere All at Once","Oppenheimer","Anora","One Battle After Another"
+    ],
+    aliases: {
+      "The Broadway Melody": ["Broadway Melody"],
+      "The Great Ziegfeld": ["Great Ziegfeld"],
+      "The Life of Emile Zola": ["Life of Emile Zola"],
+      "The Best Years of Our Lives": ["Best Years of Our Lives"],
+      "The Greatest Show on Earth": ["Greatest Show on Earth"],
+      "The Bridge on the River Kwai": ["Bridge on the River Kwai"],
+      "The Apartment": ["Apartment"],
+      "The Sound of Music": ["Sound of Music"],
+      "The Godfather": ["Godfather"],
+      "The Sting": ["Sting"],
+      "The Godfather Part II": ["Godfather Part 2","Godfather II","Godfather 2"],
+      "The Deer Hunter": ["Deer Hunter"],
+      "The Last Emperor": ["Last Emperor"],
+      "The Silence of the Lambs": ["Silence of the Lambs"],
+      "The English Patient": ["English Patient"],
+      "The Lord of the Rings: The Return of the King": ["Lord of the Rings: The Return of the King","The Return of the King","Return of the King"],
+      "The Departed": ["Departed"],
+      "The Hurt Locker": ["Hurt Locker"],
+      "The King's Speech": ["King's Speech"],
+      "The Artist": ["Artist"],
+      "The Shape of Water": ["Shape of Water"]
+    }
+  }
+];
+
+const DEFAULT_TIME_LIMIT = 10; // seconds per answer
+const BASE_POINTS = 100;
+const MAX_BONUS = 100;
+const HIGH_SCORE_KEY = "nameThemAll.highScores";
+const MOST_ANSWERED_KEY = "nameThemAll.mostAnswered";
+
+/* ---------------- Records (high scores / most answered) ---------------- */
+function loadRecords(storageKey) {
+  try {
+    return JSON.parse(localStorage.getItem(storageKey)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function getRecord(storageKey, name) {
+  return loadRecords(storageKey)[name] || 0;
+}
+
+function saveRecordIfBetter(storageKey, name, value) {
+  const records = loadRecords(storageKey);
+  const prevBest = records[name] || 0;
+  if (value > prevBest) {
+    records[name] = value;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(records));
+    } catch {
+      // localStorage unavailable (e.g. private browsing) - ignore
+    }
+    return true;
+  }
+  return false;
+}
+
+function getHighScore(catName) {
+  return getRecord(HIGH_SCORE_KEY, catName);
+}
+
+function saveHighScoreIfBetter(catName, score) {
+  return saveRecordIfBetter(HIGH_SCORE_KEY, catName, score);
+}
+
+function getMostAnswered(catName) {
+  return getRecord(MOST_ANSWERED_KEY, catName);
+}
+
+function saveMostAnsweredIfBetter(catName, count) {
+  return saveRecordIfBetter(MOST_ANSWERED_KEY, catName, count);
+}
+
+/* ---------------- State ---------------- */
+let state = null;
+let tickHandle = null;
+let selectedMode = "solo";
+let selectedTimeLimit = DEFAULT_TIME_LIMIT;
+let selectedGroup = null;
+const GROUP_ORDER = ["Geography", "Chemistry", "Sports", "Entertainment"];
+
+/* ---------------- Elements ---------------- */
+const el = (id) => document.getElementById(id);
+const screens = {
+  menu: el("menu-screen"),
+  game: el("game-screen"),
+  results: el("results-screen"),
+};
+
+function showScreen(name) {
+  Object.values(screens).forEach(s => s.classList.add("hidden"));
+  screens[name].classList.remove("hidden");
+}
+
+/* ---------------- Menu ---------------- */
+function renderMenu() {
+  selectedGroup = null;
+  renderGroups();
+  el("group-list").classList.remove("hidden");
+  el("cat-list-wrap").classList.add("hidden");
+}
+
+function renderGroups() {
+  const list = el("group-list");
+  list.innerHTML = "";
+  GROUP_ORDER.forEach(group => {
+    const cats = CATEGORIES.filter(c => c.group === group);
+    if (cats.length === 0) return;
+    const totalAnswers = cats.reduce((sum, c) => sum + resolveCategorySource(c, "en").answers.length, 0);
+    const btn = document.createElement("button");
+    btn.className = "cat-btn";
+    btn.innerHTML = `${group}<span class="count">${cats.length} categories &middot; ${totalAnswers} total answers</span>`;
+    btn.addEventListener("click", () => openGroup(group));
+    list.appendChild(btn);
+  });
+}
+
+function openGroup(group) {
+  selectedGroup = group;
+  renderCategoryList();
+  el("group-list").classList.add("hidden");
+  el("cat-list-wrap").classList.remove("hidden");
+}
+
+function renderCategoryList() {
+  const list = el("cat-list");
+  list.innerHTML = "";
+  CATEGORIES.forEach((cat, idx) => {
+    if (cat.group !== selectedGroup) return;
+
+    if (cat.languages) {
+      const card = document.createElement("div");
+      card.className = "cat-btn lang-cat";
+      const count = cat.languages.en.answers.length;
+      const enHigh = getHighScore(highScoreKeyFor(cat, "en"));
+      const jaHigh = getHighScore(highScoreKeyFor(cat, "ja"));
+      const enMost = getMostAnswered(highScoreKeyFor(cat, "en"));
+      const jaMost = getMostAnswered(highScoreKeyFor(cat, "ja"));
+      card.innerHTML = `
+        <div class="lang-cat-name">${cat.name}</div>
+        <span class="count">${count} answers &middot; ${selectedTimeLimit}s per answer &middot; High Score: ${enHigh} (English) / ${jaHigh} (日本語) &middot; Most Answered: ${enMost} (English) / ${jaMost} (日本語)</span>
+        <div class="lang-buttons">
+          <button type="button" class="lang-btn" data-lang="en">Play in English</button>
+          <button type="button" class="lang-btn" data-lang="ja">日本語でプレイ</button>
+        </div>
+      `;
+      card.querySelectorAll(".lang-btn").forEach(langBtn => {
+        langBtn.addEventListener("click", () => startGame(idx, selectedMode, langBtn.dataset.lang));
+      });
+      list.appendChild(card);
+      return;
+    }
+
+    const btn = document.createElement("button");
+    btn.className = "cat-btn";
+    btn.innerHTML = `${cat.name}<span class="count">${cat.answers.length} answers &middot; ${selectedTimeLimit}s per answer &middot; High Score: ${getHighScore(cat.name)} &middot; Most Answered: ${getMostAnswered(cat.name)}</span>`;
+    btn.addEventListener("click", () => startGame(idx, selectedMode));
+    list.appendChild(btn);
+  });
+}
+
+el("group-back-btn").addEventListener("click", () => {
+  renderMenu();
+});
+
+document.querySelectorAll("#mode-toggle .mode-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    selectedMode = btn.dataset.mode;
+    document.querySelectorAll("#mode-toggle .mode-btn").forEach(b => b.classList.toggle("active", b === btn));
+  });
+});
+
+el("time-slider").addEventListener("input", () => {
+  selectedTimeLimit = parseInt(el("time-slider").value, 10);
+  el("time-value").textContent = selectedTimeLimit;
+  if (selectedGroup) {
+    renderCategoryList();
+  } else {
+    renderGroups();
+  }
+});
+
+/* ---------------- Game logic ---------------- */
+function normalize(str) {
+  return str
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]/gu, "");
+}
+
+function resolveCategorySource(cat, lang) {
+  return cat.languages ? cat.languages[lang] : cat;
+}
+
+function buildAnswerKey(cat, lang) {
+  // maps normalized alias/name -> canonical answer string
+  const source = resolveCategorySource(cat, lang);
+  const map = new Map();
+  source.answers.forEach(ans => {
+    map.set(normalize(ans), ans);
+  });
+  if (source.aliases) {
+    Object.entries(source.aliases).forEach(([canonical, aliasList]) => {
+      aliasList.forEach(a => map.set(normalize(a), canonical));
+    });
+  }
+  return map;
+}
+
+function highScoreKeyFor(cat, lang) {
+  if (!cat.languages) return cat.name;
+  return `${cat.name} (${lang === "ja" ? "日本語" : "English"})`;
+}
+
+function startGame(catIndex, mode, lang) {
+  const cat = CATEGORIES[catIndex];
+  const source = resolveCategorySource(cat, lang);
+  state = {
+    cat,
+    lang,
+    mode,
+    timeLimit: selectedTimeLimit,
+    highScoreKey: highScoreKeyFor(cat, lang),
+    answers: source.answers,
+    answerKey: buildAnswerKey(cat, lang),
+    remaining: new Set(source.answers),
+    found: [],       // { name, timeTaken, player? }
+    missed: [],      // names not found
+    score: 0,
+    basePoints: 0,
+    bonusPoints: 0,
+    slotStart: null,
+    slotDeadline: null,
+    turn: 1,
+    consecutiveMisses: 0,
+    players: {
+      1: { score: 0, basePoints: 0, bonusPoints: 0, correct: 0 },
+      2: { score: 0, basePoints: 0, bonusPoints: 0, correct: 0 },
+    },
+  };
+  el("game-cat-name").textContent = cat.name;
+  el("total-count").textContent = source.answers.length;
+  el("solo-score-inline").classList.toggle("hidden", mode === "versus");
+  el("versus-bar").classList.toggle("hidden", mode !== "versus");
+  updateGameStats();
+  renderFoundChips();
+  showScreen("game");
+  el("answer-input").value = "";
+  setFeedback(mode === "versus" ? "Go! Player 1 starts." : "Go!", "neutral");
+  nextSlot();
+}
+
+function switchTurn() {
+  state.turn = state.turn === 1 ? 2 : 1;
+  updateGameStats();
+}
+
+function updateGameStats() {
+  el("found-count").textContent = state.found.length;
+  if (state.mode === "versus") {
+    el("p1-score").textContent = state.players[1].score;
+    el("p2-score").textContent = state.players[2].score;
+    el("p1-box").classList.toggle("active", state.turn === 1);
+    el("p2-box").classList.toggle("active", state.turn === 2);
+    el("turn-indicator").textContent = `Player ${state.turn}'s turn`;
+    el("answer-input").placeholder = `Player ${state.turn}, your answer...`;
+  } else {
+    el("live-score").textContent = state.score;
+    el("answer-input").placeholder = "Type an answer...";
+  }
+}
+
+function renderFoundChips() {
+  const wrap = el("found-chips");
+  wrap.innerHTML = "";
+  state.found.forEach(f => {
+    const chip = document.createElement("span");
+    chip.className = "chip" + (f.player ? " p" + f.player : "");
+    chip.textContent = f.player ? `${f.name} (P${f.player})` : f.name;
+    wrap.appendChild(chip);
+  });
+}
+
+function setFeedback(msg, kind) {
+  const f = el("feedback");
+  f.textContent = msg;
+  f.className = "feedback " + kind;
+}
+
+function nextSlot() {
+  if (state.remaining.size === 0) {
+    endGame();
+    return;
+  }
+  state.slotStart = performance.now();
+  state.slotDeadline = state.slotStart + state.timeLimit * 1000;
+  el("answer-input").value = "";
+  el("answer-input").focus();
+  clearInterval(tickHandle);
+  tickHandle = setInterval(tick, 50);
+  tick();
+}
+
+function tick() {
+  const now = performance.now();
+  const remainingMs = state.slotDeadline - now;
+  const frac = Math.max(0, remainingMs / (state.timeLimit * 1000));
+  const fill = el("timer-fill");
+  fill.style.width = (frac * 100) + "%";
+  fill.classList.toggle("warn", frac <= 0.5 && frac > 0.2);
+  fill.classList.toggle("danger", frac <= 0.2);
+
+  if (remainingMs <= 0) {
+    clearInterval(tickHandle);
+    handleTimeout();
+  }
+}
+
+function handleTimeout() {
+  if (state.mode === "versus") {
+    const missedPlayer = state.turn;
+    state.consecutiveMisses += 1;
+    if (state.consecutiveMisses >= 2) {
+      setFeedback(`Time's up for Player ${missedPlayer}! Neither player could answer — game over.`, "bad");
+      setTimeout(() => {
+        endGame();
+      }, 700);
+      return;
+    }
+    setFeedback(`Time's up for Player ${missedPlayer}!`, "bad");
+    setTimeout(() => {
+      switchTurn();
+      nextSlot();
+    }, 700);
+  } else {
+    setFeedback("Time's up! Game over.", "bad");
+    setTimeout(() => {
+      endGame();
+    }, 700);
+  }
+}
+
+function submitAnswer(raw) {
+  if (!state || state.remaining.size === 0) return;
+  const norm = normalize(raw);
+  if (!norm) return;
+
+  const canonical = state.answerKey.get(norm);
+
+  if (canonical && state.remaining.has(canonical)) {
+    // correct
+    clearInterval(tickHandle);
+    const elapsed = (performance.now() - state.slotStart) / 1000;
+    const timeTaken = Math.min(elapsed, state.timeLimit);
+    const bonus = Math.round(MAX_BONUS * (1 - timeTaken / state.timeLimit));
+    state.remaining.delete(canonical);
+
+    if (state.mode === "versus") {
+      const player = state.turn;
+      state.consecutiveMisses = 0;
+      state.found.push({ name: canonical, timeTaken, player });
+      const p = state.players[player];
+      p.basePoints += BASE_POINTS;
+      p.bonusPoints += bonus;
+      p.score += BASE_POINTS + bonus;
+      p.correct += 1;
+      setFeedback(`Player ${player} correct! +${BASE_POINTS + bonus} (${bonus} speed bonus)`, "good");
+    } else {
+      state.found.push({ name: canonical, timeTaken });
+      state.basePoints += BASE_POINTS;
+      state.bonusPoints += bonus;
+      state.score += BASE_POINTS + bonus;
+      setFeedback(`Correct! +${BASE_POINTS + bonus} (${bonus} speed bonus)`, "good");
+    }
+
+    updateGameStats();
+    renderFoundChips();
+    setTimeout(() => {
+      if (state.remaining.size === 0) { endGame(); return; }
+      if (state.mode === "versus") switchTurn();
+      nextSlot();
+    }, 500);
+  } else if (canonical && !state.remaining.has(canonical)) {
+    setFeedback("Already found that one.", "neutral");
+    flashShake();
+  } else {
+    setFeedback("Not a match, try again.", "bad");
+    flashShake();
+  }
+}
+
+function flashShake() {
+  const input = el("answer-input");
+  input.classList.remove("shake");
+  void input.offsetWidth; // restart animation
+  input.classList.add("shake");
+  input.value = "";
+}
+
+function endGame() {
+  clearInterval(tickHandle);
+  state.missed = [...state.remaining];
+  showResults();
+}
+
+function showResults() {
+  const soloResults = el("solo-results");
+  const versusResults = el("versus-results");
+
+  if (state.mode === "versus") {
+    soloResults.classList.add("hidden");
+    versusResults.classList.remove("hidden");
+
+    const p1 = state.players[1];
+    const p2 = state.players[2];
+    el("res-p1-score").textContent = p1.score;
+    el("res-p2-score").textContent = p2.score;
+    el("res-p1-correct").textContent = p1.correct;
+    el("res-p2-correct").textContent = p2.correct;
+
+    const banner = el("winner-banner");
+    if (p1.score > p2.score) {
+      banner.textContent = "Player 1 Wins!";
+    } else if (p2.score > p1.score) {
+      banner.textContent = "Player 2 Wins!";
+    } else {
+      banner.textContent = "It's a Tie!";
+    }
+
+    const bestOfMatch = Math.max(p1.score, p2.score);
+    const isNewHigh = saveHighScoreIfBetter(state.highScoreKey, bestOfMatch);
+    el("res-versus-highscore").textContent = getHighScore(state.highScoreKey);
+    el("versus-new-high-badge").classList.toggle("hidden", !isNewHigh);
+
+    const bestCorrectOfMatch = Math.max(p1.correct, p2.correct);
+    const isNewMostAnswered = saveMostAnsweredIfBetter(state.highScoreKey, bestCorrectOfMatch);
+    el("res-versus-most-answered").textContent = getMostAnswered(state.highScoreKey);
+    el("versus-new-most-answered-badge").classList.toggle("hidden", !isNewMostAnswered);
+  } else {
+    versusResults.classList.add("hidden");
+    soloResults.classList.remove("hidden");
+
+    el("final-score").textContent = state.score;
+    el("res-correct").textContent = `${state.found.length} / ${state.answers.length}`;
+    const avg = state.found.length
+      ? (state.found.reduce((s, f) => s + f.timeTaken, 0) / state.found.length)
+      : 0;
+    el("res-avg-time").textContent = avg.toFixed(1) + "s";
+    el("res-bonus").textContent = state.bonusPoints;
+    el("res-base").textContent = state.basePoints;
+
+    const isNewHigh = saveHighScoreIfBetter(state.highScoreKey, state.score);
+    el("res-highscore").textContent = getHighScore(state.highScoreKey);
+    el("new-high-badge").classList.toggle("hidden", !isNewHigh);
+
+    const isNewMostAnswered = saveMostAnsweredIfBetter(state.highScoreKey, state.found.length);
+    el("res-most-answered").textContent = getMostAnswered(state.highScoreKey);
+    el("new-most-answered-badge").classList.toggle("hidden", !isNewMostAnswered);
+  }
+
+  const missedWrap = el("missed-wrap");
+  const missedList = el("missed-list");
+  const missedReveal = el("missed-reveal");
+  const missedToggle = el("missed-toggle");
+  if (state.missed.length) {
+    missedWrap.classList.remove("hidden");
+    missedList.textContent = state.missed.join(", ");
+    missedReveal.classList.add("hidden");
+    missedToggle.textContent = "Show Missed Answers";
+  } else {
+    missedWrap.classList.add("hidden");
+  }
+  showScreen("results");
+}
+
+/* ---------------- Events ---------------- */
+el("answer-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  submitAnswer(el("answer-input").value);
+});
+
+el("quit-btn").addEventListener("click", () => {
+  endGame();
+});
+
+el("replay-btn").addEventListener("click", () => {
+  const idx = CATEGORIES.indexOf(state.cat);
+  startGame(idx, state.mode, state.lang);
+});
+
+el("menu-btn").addEventListener("click", () => {
+  clearInterval(tickHandle);
+  renderMenu();
+  showScreen("menu");
+});
+
+el("missed-toggle").addEventListener("click", () => {
+  const missedReveal = el("missed-reveal");
+  const nowHidden = missedReveal.classList.toggle("hidden");
+  el("missed-toggle").textContent = nowHidden ? "Show Missed Answers" : "Hide Missed Answers";
+});
+
+/* ---------------- Init ---------------- */
+renderMenu();
+showScreen("menu");
+</script>
+</body>
+</html>
