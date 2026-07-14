@@ -3,6 +3,7 @@ const BASE_POINTS = 100;
 const MAX_BONUS = 100;
 const HIGH_SCORE_KEY = "nameThemAll.highScores";
 const MOST_ANSWERED_KEY = "nameThemAll.mostAnswered";
+const MAX_MISSED_DISPLAY = 20;
 
 /* ---------------- Records (high scores / most answered) ---------------- */
 function loadRecords(storageKey) {
@@ -447,9 +448,11 @@ function showResults() {
   const missedToggle = el("missed-toggle");
   if (state.missed.length) {
     missedWrap.classList.remove("hidden");
-    missedList.textContent = state.missed.join(", ");
+    const shown = state.missed.slice(0, MAX_MISSED_DISPLAY);
+    const hiddenCount = state.missed.length - shown.length;
+    missedList.textContent = shown.join(", ") + (hiddenCount > 0 ? `, and ${hiddenCount} more...` : "");
     missedReveal.classList.add("hidden");
-    missedToggle.textContent = "Show Missed Answers";
+    missedToggle.textContent = `Show Missed Answers (${state.missed.length})`;
   } else {
     missedWrap.classList.add("hidden");
   }
@@ -480,7 +483,8 @@ el("menu-btn").addEventListener("click", () => {
 el("missed-toggle").addEventListener("click", () => {
   const missedReveal = el("missed-reveal");
   const nowHidden = missedReveal.classList.toggle("hidden");
-  el("missed-toggle").textContent = nowHidden ? "Show Missed Answers" : "Hide Missed Answers";
+  const label = nowHidden ? "Show" : "Hide";
+  el("missed-toggle").textContent = `${label} Missed Answers (${state.missed.length})`;
 });
 
 /* ---------------- Init ---------------- */
