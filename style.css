@@ -303,6 +303,15 @@ button.secondary {
   background: var(--panel-2);
   border-radius: 10px;
   padding: 14px 16px;
+  border: 2px solid transparent;
+  transition: border-color .2s, opacity .2s;
+}
+.result-box.winner {
+  border-color: var(--good);
+  background: rgba(61,220,132,0.12);
+}
+.result-box.loser {
+  opacity: 0.55;
 }
 .result-box .label {
   color: var(--muted);
@@ -329,5 +338,24 @@ button.secondary {
   font-weight: 700;
   margin: 4px 0 20px;
   color: var(--good);
+}
+.achievement-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(61,220,132,0.15);
+  border: 1px solid var(--good);
+  color: var(--good);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 16px;
+  animation: badgePop .35s ease-out;
+}
+@keyframes badgePop {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); }
 }
 .hidden { display: none !important; }

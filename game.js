@@ -402,11 +402,19 @@ function showResults() {
     el("res-p1-correct").textContent = p1.correct;
     el("res-p2-correct").textContent = p2.correct;
 
+    const p1Boxes = [el("res-p1-score-box"), el("res-p1-correct-box")];
+    const p2Boxes = [el("res-p2-score-box"), el("res-p2-correct-box")];
+    [...p1Boxes, ...p2Boxes].forEach(box => box.classList.remove("winner", "loser"));
+
     const banner = el("winner-banner");
     if (p1.score > p2.score) {
       banner.textContent = "Player 1 Wins!";
+      p1Boxes.forEach(box => box.classList.add("winner"));
+      p2Boxes.forEach(box => box.classList.add("loser"));
     } else if (p2.score > p1.score) {
       banner.textContent = "Player 2 Wins!";
+      p2Boxes.forEach(box => box.classList.add("winner"));
+      p1Boxes.forEach(box => box.classList.add("loser"));
     } else {
       banner.textContent = "It's a Tie!";
     }
