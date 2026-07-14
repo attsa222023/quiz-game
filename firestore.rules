@@ -1,0 +1,30 @@
+rules_version = '2';
+
+// Deliberately loose beyond UID gating: full game-logic validation (e.g.
+// verifying a submitted answer is actually correct) is an accepted,
+// out-of-scope tradeoff for this hobby project - see README. These rules
+// only enforce "you must be anonymously signed in and be one of the two
+// players who created/joined this room."
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /rooms/{roomCode} {
+      // Anyone with the room code can look up/join a room.
+      allow get: if true;
+
+      allow create: if request.auth != null
+                    && request.resource.data.players[1].uid == request.auth.uid
+                    && request.resource.data.status == 'waiting';
+
+      allow update: if request.auth != null
+                    && (request.auth.uid == resource.data.players[1].uid
+                        || (resource.data.players[2] != null
+                            && request.auth.uid == resource.data.players[2].uid)
+                        // Allows the joining player's write to claim player 2.
+                        || resource.data.players[2] == null);
+
+      // Rely on the Firestore TTL policy (see README) for cleanup, not
+      // client-initiated deletes.
+      allow delete: if false;
+    }
+  }
+}
