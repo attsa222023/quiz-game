@@ -67,6 +67,10 @@ const screens = {
 function showScreen(name) {
   Object.values(screens).forEach(s => s.classList.add("hidden"));
   screens[name].classList.remove("hidden");
+  // Move focus into the new screen so keyboard/screen-reader focus never
+  // stays stranded on a now-hidden element from the previous screen.
+  const heading = screens[name].querySelector("h1");
+  if (heading) heading.focus();
 }
 
 /* ---------------- Menu ---------------- */
