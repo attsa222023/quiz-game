@@ -196,6 +196,15 @@ function highScoreKeyFor(cat, lang) {
   return `${cat.name} (${lang === "ja" ? "日本語" : "English"})`;
 }
 
+// Pure: derives the not-yet-found answers from the full answer list and a
+// found[] array, rather than storing "remaining" as its own piece of state.
+// For online mode this lets Firestore carry only the append-only found[]
+// list instead of duplicating/re-syncing a shrinking remaining set too.
+function computeRemaining(answers, found) {
+  const foundNames = new Set(found.map(f => f.name));
+  return answers.filter(a => !foundNames.has(a));
+}
+
 function startGame(catIndex, mode, lang) {
   const cat = CATEGORIES[catIndex];
   const source = resolveCategorySource(cat, lang);
@@ -203,6 +212,7 @@ function startGame(catIndex, mode, lang) {
     cat,
     lang,
     mode,
+    online: false,
     timeLimit: selectedTimeLimit,
     highScoreKey: highScoreKeyFor(cat, lang),
     answers: source.answers,
@@ -296,11 +306,11 @@ function tick() {
 
   if (remainingMs <= 0) {
     clearInterval(tickHandle);
-    handleTimeout();
+    state.online ? handleTimeoutOnline() : handleTimeoutLocal();
   }
 }
 
-function handleTimeout() {
+function handleTimeoutLocal() {
   if (state.mode === "versus") {
     const missedPlayer = state.turn;
     state.consecutiveMisses += 1;
@@ -325,6 +335,11 @@ function handleTimeout() {
 }
 
 function submitAnswer(raw) {
+  if (!state) return;
+  state.online ? submitAnswerOnline(raw) : submitAnswerLocal(raw);
+}
+
+function submitAnswerLocal(raw) {
   if (!state || state.remaining.size === 0) return;
   const norm = normalize(raw);
   if (!norm) return;
