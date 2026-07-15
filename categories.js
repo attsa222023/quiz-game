@@ -82,7 +82,11 @@ const CATEGORIES = [
     }
   },
   {
-    name: "Elements of the Periodic Table",
+    // Scoped to the 94 naturally occurring elements (Hydrogen through
+    // Plutonium) rather than the full periodic table - unifies EN/ZH at the
+    // same answer count and also sidesteps the rare-character/unsettled-
+    // naming risk of the synthetic "superheavy" elements entirely.
+    name: "Naturally Occurring Elements (Periodic Table)",
     group: "Chemistry",
     languages: {
       en: {
@@ -96,9 +100,7 @@ const CATEGORIES = [
           "Promethium","Samarium","Europium","Gadolinium","Terbium","Dysprosium","Holmium","Erbium","Thulium","Ytterbium",
           "Lutetium","Hafnium","Tantalum","Tungsten","Rhenium","Osmium","Iridium","Platinum","Gold","Mercury",
           "Thallium","Lead","Bismuth","Polonium","Astatine","Radon","Francium","Radium","Actinium","Thorium",
-          "Protactinium","Uranium","Neptunium","Plutonium","Americium","Curium","Berkelium","Californium","Einsteinium","Fermium",
-          "Mendelevium","Nobelium","Lawrencium","Rutherfordium","Dubnium","Seaborgium","Bohrium","Hassium","Meitnerium","Darmstadtium",
-          "Roentgenium","Copernicium","Nihonium","Flerovium","Moscovium","Livermorium","Tennessine","Oganesson"
+          "Protactinium","Uranium","Neptunium","Plutonium"
         ],
         // Accepts each element's official chemical symbol as an answer
         // alongside the full name (e.g. "Fe" for Iron), plus the common
@@ -126,19 +128,9 @@ const CATEGORIES = [
           "Mercury": ["Hg"], "Thallium": ["Tl"], "Lead": ["Pb"], "Bismuth": ["Bi"], "Polonium": ["Po"],
           "Astatine": ["At"], "Radon": ["Rn"], "Francium": ["Fr"], "Radium": ["Ra"],
           "Actinium": ["Ac"], "Thorium": ["Th"], "Protactinium": ["Pa"], "Uranium": ["U"],
-          "Neptunium": ["Np"], "Plutonium": ["Pu"], "Americium": ["Am"], "Curium": ["Cm"],
-          "Berkelium": ["Bk"], "Californium": ["Cf"], "Einsteinium": ["Es"], "Fermium": ["Fm"],
-          "Mendelevium": ["Md"], "Nobelium": ["No"], "Lawrencium": ["Lr"], "Rutherfordium": ["Rf"],
-          "Dubnium": ["Db"], "Seaborgium": ["Sg"], "Bohrium": ["Bh"], "Hassium": ["Hs"],
-          "Meitnerium": ["Mt"], "Darmstadtium": ["Ds"], "Roentgenium": ["Rg"], "Copernicium": ["Cn"],
-          "Nihonium": ["Nh"], "Flerovium": ["Fl"], "Moscovium": ["Mc"], "Livermorium": ["Lv"],
-          "Tennessine": ["Ts"], "Oganesson": ["Og"]
+          "Neptunium": ["Np"], "Plutonium": ["Pu"]
         }
       },
-      // Deliberately stops at Lawrencium (103): the remaining "superheavy"
-      // synthetic elements (Rutherfordium onward) use rare, still-unsettled
-      // Traditional Chinese characters that even standard fonts/IMEs often
-      // don't support well - not confident enough in those to ship them.
       zh: {
         answers: [
           "氫","氦","鋰","鈹","硼","碳","氮","氧","氟","氖",
@@ -150,8 +142,7 @@ const CATEGORIES = [
           "鉕","釤","銪","釓","鋱","鏑","鈥","鉺","銩","鐿",
           "鎦","鉿","鉭","鎢","錸","鋨","銥","鉑","金","汞",
           "鉈","鉛","鉍","釙","砈","氡","鍅","鐳","錒","釷",
-          "鏷","鈾","錼","鈽","鋂","鋦","鉳","鐦","鑀","鐨",
-          "鍆","鍩","鐒"
+          "鏷","鈾","錼","鈽"
         ],
         // The international chemical symbol (e.g. "Fe") is accepted here
         // too, since symbols are language-neutral and this is a nice bit of
@@ -178,9 +169,7 @@ const CATEGORIES = [
           "汞": ["Hg"], "鉈": ["Tl"], "鉛": ["Pb"], "鉍": ["Bi"], "釙": ["Po"],
           "砈": ["At"], "氡": ["Rn"], "鍅": ["Fr"], "鐳": ["Ra"],
           "錒": ["Ac"], "釷": ["Th"], "鏷": ["Pa"], "鈾": ["U"],
-          "錼": ["Np"], "鈽": ["Pu"], "鋂": ["Am"], "鋦": ["Cm"],
-          "鉳": ["Bk"], "鐦": ["Cf"], "鑀": ["Es"], "鐨": ["Fm"],
-          "鍆": ["Md"], "鍩": ["No"], "鐒": ["Lr"]
+          "錼": ["Np"], "鈽": ["Pu"]
         }
       }
     }
