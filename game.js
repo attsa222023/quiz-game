@@ -434,10 +434,16 @@ function applyRoomSnapshot(data) {
       // serverTimestamp() value alone already guarantees regardless of this.
       state.clockOffsetMs = resolvedMs - Date.now();
       state._timeoutAttempted = false;
-      if (!tickHandle) {
-        tickHandle = setInterval(tick, 50);
-        tick();
-      }
+      // Unconditionally restart rather than gating on "if (!tickHandle)":
+      // several places clear the interval without nulling the variable
+      // (quit, back-to-menu, match-finished), which left a stale-but-truthy
+      // tickHandle that fooled that check into skipping a fresh interval
+      // for the next match in the same tab - freezing the timer bar while
+      // turn/score/found-chips kept updating fine via this same listener,
+      // since those never depended on tick() running at all.
+      clearInterval(tickHandle);
+      tickHandle = setInterval(tick, 50);
+      tick();
     }
   }
 
@@ -447,6 +453,7 @@ function applyRoomSnapshot(data) {
   if (data.status === "finished" && !state._finished) {
     state._finished = true;
     clearInterval(tickHandle);
+    tickHandle = null;
     if (onlineRoomUnsubscribe) {
       onlineRoomUnsubscribe();
       onlineRoomUnsubscribe = null;
@@ -580,6 +587,7 @@ function tick() {
       handleTimeoutOnline();
     } else {
       clearInterval(tickHandle);
+      tickHandle = null;
       handleTimeoutLocal();
     }
   }
@@ -640,6 +648,7 @@ function submitAnswerLocal(raw) {
   if (canonical && state.remaining.has(canonical)) {
     // correct
     clearInterval(tickHandle);
+    tickHandle = null;
     const elapsed = (performance.now() - state.slotStart) / 1000;
     const timeTaken = Math.min(elapsed, state.timeLimit);
     const bonus = Math.round(MAX_BONUS * (1 - timeTaken / state.timeLimit));
@@ -721,6 +730,7 @@ function flashShake() {
 
 function endGame() {
   clearInterval(tickHandle);
+  tickHandle = null;
   state.missed = [...state.remaining];
   showResults();
 }
@@ -835,6 +845,7 @@ el("quit-btn").addEventListener("click", () => {
     // every online state change goes through), rather than ending the
     // match locally with stale state before the write lands.
     clearInterval(tickHandle);
+    tickHandle = null;
     Online.forfeitMatch(state.roomCode, state.myPlayer).catch(err => {
       console.error("forfeitMatch failed", err);
     });
@@ -850,6 +861,7 @@ el("replay-btn").addEventListener("click", () => {
 
 el("menu-btn").addEventListener("click", () => {
   clearInterval(tickHandle);
+  tickHandle = null;
   renderMenu();
   showScreen("menu");
 });
