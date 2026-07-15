@@ -28,7 +28,7 @@ Pick a category, then name as many answers as you can. Each answer gets its own 
 - Japan Prefectures (English / 日本語)
 
 **Chemistry**
-- Elements in the First 20 (Periodic Table)
+- Elements of the Periodic Table (accepts chemical symbols too, e.g. "Fe" for Iron)
 
 **Sports**
 - Countries that have Qualified for the FIFA World Cup
