@@ -73,6 +73,10 @@ h1 {
   font-size: 13px;
   margin-top: 4px;
 }
+.cleared-badge {
+  color: var(--good);
+  font-weight: 700;
+}
 .lang-cat {
   cursor: default;
 }

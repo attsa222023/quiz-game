@@ -3,6 +3,7 @@ const BASE_POINTS = 100;
 const MAX_BONUS = 100;
 const HIGH_SCORE_KEY = "nameThemAll.highScores";
 const MOST_ANSWERED_KEY = "nameThemAll.mostAnswered";
+const CLEARED_KEY = "nameThemAll.cleared";
 const MAX_MISSED_DISPLAY = 20;
 
 /* ---------------- Records (high scores / most answered) ---------------- */
@@ -47,6 +48,24 @@ function getMostAnswered(catName) {
 
 function saveMostAnsweredIfBetter(catName, count) {
   return saveRecordIfBetter(MOST_ANSWERED_KEY, catName, count);
+}
+
+// Permanent (never un-set) record of whether a category/language has ever
+// been fully cleared - separate from the achievement badge on the results
+// screen, which fires every time; this backs the menu's persistent marker.
+function isCleared(catName) {
+  return !!loadRecords(CLEARED_KEY)[catName];
+}
+
+function markCleared(catName) {
+  const records = loadRecords(CLEARED_KEY);
+  if (records[catName]) return;
+  records[catName] = true;
+  try {
+    localStorage.setItem(CLEARED_KEY, JSON.stringify(records));
+  } catch {
+    // localStorage unavailable (e.g. private browsing) - ignore
+  }
 }
 
 /* ---------------- State ---------------- */
@@ -130,9 +149,14 @@ function renderCategoryList() {
       const countSummary = summarize(l => cat.languages[l].answers.length);
       const highSummary = summarize(l => getHighScore(highScoreKeyFor(cat, l)));
       const mostSummary = summarize(l => getMostAnswered(highScoreKeyFor(cat, l)));
-      const buttonsHtml = langs.map(l =>
-        `<button type="button" class="lang-btn" data-lang="${l}">${PLAY_LABELS[l] || `Play in ${LANG_LABELS[l] || l}`}</button>`
-      ).join("");
+      // Clearing is tracked per-language (same key scheme as high score), so
+      // the checkmark goes on each language's own button rather than the
+      // shared category name.
+      const buttonsHtml = langs.map(l => {
+        const label = PLAY_LABELS[l] || `Play in ${LANG_LABELS[l] || l}`;
+        const clearedMark = isCleared(highScoreKeyFor(cat, l)) ? ' <span class="cleared-badge" title="Cleared before">&check;</span>' : "";
+        return `<button type="button" class="lang-btn" data-lang="${l}">${label}${clearedMark}</button>`;
+      }).join("");
       card.innerHTML = `
         <div class="lang-cat-name">${cat.name}</div>
         <span class="count">${countSummary} answers &middot; ${selectedTimeLimit}s per answer &middot; High Score: ${highSummary} &middot; Most Answered: ${mostSummary}</span>
@@ -155,7 +179,8 @@ function renderCategoryList() {
 
     const btn = document.createElement("button");
     btn.className = "cat-btn";
-    btn.innerHTML = `${cat.name}<span class="count">${cat.answers.length} answers &middot; ${selectedTimeLimit}s per answer &middot; High Score: ${getHighScore(cat.name)} &middot; Most Answered: ${getMostAnswered(cat.name)}</span>`;
+    const clearedMark = isCleared(cat.name) ? '<span class="cleared-badge" title="Cleared before">&check; </span>' : "";
+    btn.innerHTML = `${clearedMark}${cat.name}<span class="count">${cat.answers.length} answers &middot; ${selectedTimeLimit}s per answer &middot; High Score: ${getHighScore(cat.name)} &middot; Most Answered: ${getMostAnswered(cat.name)}</span>`;
     btn.addEventListener("click", () => {
       if (rematchMode) {
         offerRematchFlow(idx, undefined);
@@ -788,6 +813,7 @@ function showResults() {
   // when you beat a previous best) since it's a threshold you either hit or
   // don't each round, not a record to improve on.
   const isFullClear = state.found.length === state.answers.length;
+  if (isFullClear) markCleared(state.highScoreKey);
 
   if (state.mode === "versus") {
     soloResults.classList.add("hidden");
