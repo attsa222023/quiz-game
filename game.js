@@ -116,7 +116,13 @@ function renderGroups() {
   GROUP_ORDER.forEach(group => {
     const cats = CATEGORIES.filter(c => c.group === group);
     if (cats.length === 0) return;
-    const totalAnswers = cats.reduce((sum, c) => sum + resolveCategorySource(c, "en").answers.length, 0);
+    // Falls back to whichever language a category actually has (not every
+    // languages-category includes "en" - e.g. Taipei MRT Stations is
+    // zh-only for now) rather than assuming "en" always exists.
+    const totalAnswers = cats.reduce((sum, c) => {
+      const lang = c.languages ? (c.languages.en ? "en" : Object.keys(c.languages)[0]) : undefined;
+      return sum + resolveCategorySource(c, lang).answers.length;
+    }, 0);
     const btn = document.createElement("button");
     btn.className = "cat-btn";
     btn.innerHTML = `${group}<span class="count">${cats.length} categories &middot; ${totalAnswers} total answers</span>`;
