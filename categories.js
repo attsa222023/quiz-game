@@ -366,6 +366,52 @@ const CATEGORIES = [
     }
   },
   {
+    // Theatrical MCU films only, through the most recently released one as
+    // of writing (The Fantastic Four: First Steps, 2025) - excludes
+    // upcoming/unreleased titles (e.g. Spider-Man: Brand New Day, Avengers:
+    // Doomsday) so answers don't go stale before they've even come out.
+    name: "Marvel Cinematic Universe Films",
+    group: "Entertainment",
+    answers: [
+      "Iron Man","The Incredible Hulk","Iron Man 2","Thor","Captain America: The First Avenger","The Avengers",
+      "Iron Man 3","Thor: The Dark World","Captain America: The Winter Soldier","Guardians of the Galaxy","Avengers: Age of Ultron","Ant-Man",
+      "Captain America: Civil War","Doctor Strange","Guardians of the Galaxy Vol. 2","Spider-Man: Homecoming","Thor: Ragnarok","Black Panther",
+      "Avengers: Infinity War","Ant-Man and the Wasp","Captain Marvel","Avengers: Endgame","Spider-Man: Far From Home",
+      "Black Widow","Shang-Chi and the Legend of the Ten Rings","Eternals","Spider-Man: No Way Home",
+      "Doctor Strange in the Multiverse of Madness","Thor: Love and Thunder","Black Panther: Wakanda Forever",
+      "Ant-Man and the Wasp: Quantumania","Guardians of the Galaxy Vol. 3","The Marvels","Deadpool & Wolverine",
+      "Captain America: Brave New World","Thunderbolts*","The Fantastic Four: First Steps"
+    ],
+    aliases: {
+      "The Incredible Hulk": ["Incredible Hulk","Hulk"],
+      "Captain America: The First Avenger": ["First Avenger"],
+      "The Avengers": ["Avengers"],
+      "Thor: The Dark World": ["Dark World"],
+      "Captain America: The Winter Soldier": ["Winter Soldier"],
+      "Guardians of the Galaxy": ["GOTG"],
+      "Captain America: Civil War": ["Civil War"],
+      "Guardians of the Galaxy Vol. 2": ["Guardians of the Galaxy 2","GOTG Vol 2","GOTG 2"],
+      "Spider-Man: Homecoming": ["Homecoming"],
+      "Thor: Ragnarok": ["Ragnarok"],
+      "Avengers: Age of Ultron": ["Age of Ultron"],
+      "Avengers: Infinity War": ["Infinity War"],
+      "Ant-Man and the Wasp": ["Ant-Man 2"],
+      "Avengers: Endgame": ["Endgame"],
+      "Spider-Man: Far From Home": ["Far From Home"],
+      "Shang-Chi and the Legend of the Ten Rings": ["Shang-Chi"],
+      "Spider-Man: No Way Home": ["No Way Home"],
+      "Doctor Strange in the Multiverse of Madness": ["Doctor Strange 2","Multiverse of Madness"],
+      "Thor: Love and Thunder": ["Love and Thunder"],
+      "Black Panther: Wakanda Forever": ["Wakanda Forever"],
+      "Ant-Man and the Wasp: Quantumania": ["Quantumania","Ant-Man 3"],
+      "Guardians of the Galaxy Vol. 3": ["Guardians of the Galaxy 3","GOTG Vol 3","GOTG 3"],
+      "The Marvels": ["Marvels"],
+      "Deadpool & Wolverine": ["Deadpool and Wolverine"],
+      "Captain America: Brave New World": ["Brave New World"],
+      "The Fantastic Four: First Steps": ["Fantastic Four","First Steps"]
+    }
+  },
+  {
     name: "Best Picture Oscar Winners (1927-2025)",
     group: "Entertainment",
     answers: [
