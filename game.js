@@ -783,6 +783,11 @@ function endGame() {
 function showResults() {
   const soloResults = el("solo-results");
   const versusResults = el("versus-results");
+  // Every answer in the category was found before the round ended - shown
+  // every time it happens (unlike High Score/Most Answered, which only fire
+  // when you beat a previous best) since it's a threshold you either hit or
+  // don't each round, not a record to improve on.
+  const isFullClear = state.found.length === state.answers.length;
 
   if (state.mode === "versus") {
     soloResults.classList.add("hidden");
@@ -831,6 +836,7 @@ function showResults() {
     const isNewMostAnswered = saveMostAnsweredIfBetter(state.highScoreKey, myCorrect);
     el("res-versus-most-answered").textContent = getMostAnswered(state.highScoreKey);
     el("versus-new-most-answered-badge").classList.toggle("hidden", !isNewMostAnswered);
+    el("versus-new-clear-badge").classList.toggle("hidden", !isFullClear);
 
     if (state.online) {
       renderRematchUI(state.rematch, state.myPlayer);
@@ -858,6 +864,7 @@ function showResults() {
     const isNewMostAnswered = saveMostAnsweredIfBetter(state.highScoreKey, state.found.length);
     el("res-most-answered").textContent = getMostAnswered(state.highScoreKey);
     el("new-most-answered-badge").classList.toggle("hidden", !isNewMostAnswered);
+    el("new-clear-badge").classList.toggle("hidden", !isFullClear);
 
     el("replay-btn").classList.remove("hidden");
   }
