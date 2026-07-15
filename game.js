@@ -59,6 +59,9 @@ let onlineSubMode = null; // null | "create" | "join"
 let onlineRoomCode = null;
 let onlineMyPlayer = null;
 let onlineRoomUnsubscribe = null;
+let rematchMode = false;
+let rematchRoomCode = null;
+let rematchMyPlayer = null;
 const GROUP_ORDER = ["Geography", "Chemistry", "Sports", "Entertainment"];
 
 /* ---------------- Elements ---------------- */
@@ -133,7 +136,9 @@ function renderCategoryList() {
       `;
       card.querySelectorAll(".lang-btn").forEach(langBtn => {
         langBtn.addEventListener("click", () => {
-          if (selectedMode === "online") {
+          if (rematchMode) {
+            offerRematchFlow(idx, langBtn.dataset.lang);
+          } else if (selectedMode === "online") {
             createOnlineRoom(idx, langBtn.dataset.lang);
           } else {
             startGame(idx, selectedMode, langBtn.dataset.lang);
@@ -148,7 +153,9 @@ function renderCategoryList() {
     btn.className = "cat-btn";
     btn.innerHTML = `${cat.name}<span class="count">${cat.answers.length} answers &middot; ${selectedTimeLimit}s per answer &middot; High Score: ${getHighScore(cat.name)} &middot; Most Answered: ${getMostAnswered(cat.name)}</span>`;
     btn.addEventListener("click", () => {
-      if (selectedMode === "online") {
+      if (rematchMode) {
+        offerRematchFlow(idx, undefined);
+      } else if (selectedMode === "online") {
         createOnlineRoom(idx, undefined);
       } else {
         startGame(idx, selectedMode);
@@ -192,6 +199,7 @@ document.querySelectorAll("#mode-toggle .mode-btn").forEach(btn => {
       el("online-error").classList.remove("hidden");
       return;
     }
+    leaveOnlineRoom();
     selectedMode = btn.dataset.mode;
     onlineSubMode = null;
     document.querySelectorAll("#mode-toggle .mode-btn").forEach(b => b.classList.toggle("active", b === btn));
@@ -395,15 +403,31 @@ function startOnlineGame(roomData) {
   showScreen("game");
   setFeedback("Match started!", "neutral");
 
-  onlineRoomUnsubscribe = Online.subscribeToRoom(onlineRoomCode, applyRoomSnapshot);
+  // Only reachable once here per room in the normal flow (lobby handoff
+  // unsubscribes before calling this), but a rematch restart re-enters this
+  // function from inside the still-alive listener's own callback - guard so
+  // that path doesn't stack a second subscription onto the same room.
+  if (!onlineRoomUnsubscribe) {
+    const boundRoomCode = onlineRoomCode;
+    onlineRoomUnsubscribe = Online.subscribeToRoom(onlineRoomCode, (data) => applyRoomSnapshot(boundRoomCode, data));
+  }
 }
 
 // Reconciles local state from a Firestore room snapshot - the single point
 // every online state change flows through (answers, timeouts, forfeits all
 // just write to Firestore and let this react), reusing the exact same
 // render functions (updateGameStats/renderFoundChips) local mode uses.
-function applyRoomSnapshot(data) {
-  if (!data || !state || !state.online) return;
+function applyRoomSnapshot(roomCode, data) {
+  if (!data || !state || !state.online || state.roomCode !== roomCode) return;
+
+  // A rematch both players accepted flips this same room back to "active"
+  // after it had finished - rebuild state for the new match, then
+  // deliberately fall through (not return) so the slot-detection block
+  // below (against this same `data`) starts the tick loop for the new slot;
+  // startOnlineGame itself never touches slotStart/tickHandle.
+  if (data.status === "active" && state._finished) {
+    startOnlineGame(data);
+  }
 
   state.found = data.found || [];
   state.remaining = new Set(computeRemaining(state.answers, state.found));
@@ -417,6 +441,7 @@ function applyRoomSnapshot(data) {
   // decide a winner independent of score (e.g. quitting a 0-0 match), which
   // a client-side score comparison alone would get wrong.
   state.winner = data.winner;
+  state.rematch = data.rematch;
 
   // slotStartedAt is a Firestore serverTimestamp() - the single source of
   // truth both devices' race-adjudication compares against, so neither
@@ -450,17 +475,71 @@ function applyRoomSnapshot(data) {
   updateGameStats();
   renderFoundChips();
 
-  if (data.status === "finished" && !state._finished) {
-    state._finished = true;
-    clearInterval(tickHandle);
-    tickHandle = null;
-    if (onlineRoomUnsubscribe) {
-      onlineRoomUnsubscribe();
-      onlineRoomUnsubscribe = null;
+  if (data.status === "finished") {
+    if (!state._finished) {
+      state._finished = true;
+      clearInterval(tickHandle);
+      tickHandle = null;
+      // Deliberately keep listening past match-finish (unlike the old
+      // behavior of unsubscribing here) - this same subscription is how
+      // rematch offers/accepts from either player get observed without
+      // leaving the room.
+      state.missed = [...state.remaining];
+      showResults();
+    } else {
+      renderRematchUI(state.rematch, state.myPlayer);
     }
-    state.missed = [...state.remaining];
-    showResults();
   }
+}
+
+// Toggles between the "Play Again" button and the two rematch sub-views
+// based on the room's current rematch offer, if any.
+function renderRematchUI(rematch, myPlayer) {
+  const hasOffer = !!(rematch && rematch.offeredBy);
+  el("replay-btn").classList.toggle("hidden", hasOffer);
+  el("rematch-area").classList.toggle("hidden", !hasOffer);
+  if (!hasOffer) return;
+  const iOffered = rematch.offeredBy === myPlayer;
+  el("rematch-waiting").classList.toggle("hidden", !iOffered);
+  el("rematch-incoming").classList.toggle("hidden", iOffered);
+  if (!iOffered) {
+    el("rematch-incoming-text").textContent = `Player ${rematch.offeredBy} wants a rematch: ${CATEGORIES[rematch.categoryIndex].name}`;
+  }
+}
+
+// Fired from renderCategoryList's click handlers when rematchMode is active
+// (borrowed from the menu screen's normal category picker). Writes the
+// offer and lets the still-alive room subscription's next snapshot (this
+// client's own write echo included) render the "waiting for opponent" state.
+async function offerRematchFlow(idx, lang) {
+  rematchMode = false;
+  try {
+    await Online.offerRematch(rematchRoomCode, rematchMyPlayer, idx, lang, selectedTimeLimit);
+  } catch (err) {
+    console.error("offerRematch failed", err);
+  }
+  showScreen("results");
+}
+
+// Shared cleanup for every path that can abandon a live online room:
+// back-to-menu, and switching modes mid-rematch-pick (the only other place
+// a player can reach #menu-screen with a room still live).
+function leaveOnlineRoom() {
+  if (!onlineRoomCode) return;
+  if (state && state.online) {
+    // Hygiene for the opponent's UI so they aren't left waiting forever on a
+    // rematch offer that's never coming; idempotent no-op if none is pending.
+    Online.declineRematch(state.roomCode).catch(() => {});
+  }
+  if (onlineRoomUnsubscribe) {
+    onlineRoomUnsubscribe();
+    onlineRoomUnsubscribe = null;
+  }
+  onlineRoomCode = null;
+  onlineMyPlayer = null;
+  rematchMode = false;
+  rematchRoomCode = null;
+  rematchMyPlayer = null;
 }
 
 function startGame(catIndex, mode, lang) {
@@ -786,6 +865,13 @@ function showResults() {
     const isNewMostAnswered = saveMostAnsweredIfBetter(state.highScoreKey, myCorrect);
     el("res-versus-most-answered").textContent = getMostAnswered(state.highScoreKey);
     el("versus-new-most-answered-badge").classList.toggle("hidden", !isNewMostAnswered);
+
+    if (state.online) {
+      renderRematchUI(state.rematch, state.myPlayer);
+    } else {
+      el("replay-btn").classList.remove("hidden");
+      el("rematch-area").classList.add("hidden");
+    }
   } else {
     versusResults.classList.add("hidden");
     soloResults.classList.remove("hidden");
@@ -806,6 +892,8 @@ function showResults() {
     const isNewMostAnswered = saveMostAnsweredIfBetter(state.highScoreKey, state.found.length);
     el("res-most-answered").textContent = getMostAnswered(state.highScoreKey);
     el("new-most-answered-badge").classList.toggle("hidden", !isNewMostAnswered);
+
+    el("replay-btn").classList.remove("hidden");
   }
 
   const missedWrap = el("missed-wrap");
@@ -822,11 +910,6 @@ function showResults() {
   } else {
     missedWrap.classList.add("hidden");
   }
-
-  // Online matches keep state.mode === "versus" (never a 3rd mode value),
-  // so without this guard "Play Again" would silently start a *local*
-  // hot-seat game using the online match's category - hide it instead.
-  el("replay-btn").classList.toggle("hidden", state.online === true);
 
   showScreen("results");
 }
@@ -855,15 +938,39 @@ el("quit-btn").addEventListener("click", () => {
 });
 
 el("replay-btn").addEventListener("click", () => {
-  const idx = CATEGORIES.indexOf(state.cat);
-  startGame(idx, state.mode, state.lang);
+  if (state.online) {
+    // Stays in the same room, just borrowing the menu screen's category
+    // picker - deliberately doesn't touch onlineRoomCode/onlineMyPlayer or
+    // unsubscribe, since the still-alive room listener is what lets the
+    // opponent's accept/decline reach us on the results screen.
+    rematchMode = true;
+    rematchRoomCode = state.roomCode;
+    rematchMyPlayer = state.myPlayer;
+    el("online-mode-choice").classList.add("hidden");
+    el("online-join-form").classList.add("hidden");
+    el("online-error").classList.add("hidden");
+    renderMenu();
+    showScreen("menu");
+  } else {
+    const idx = CATEGORIES.indexOf(state.cat);
+    startGame(idx, state.mode, state.lang);
+  }
 });
 
 el("menu-btn").addEventListener("click", () => {
+  leaveOnlineRoom();
   clearInterval(tickHandle);
   tickHandle = null;
   renderMenu();
   showScreen("menu");
+});
+
+el("rematch-accept-btn").addEventListener("click", () => {
+  Online.acceptRematch(state.roomCode, state.myPlayer).catch(err => console.error("acceptRematch failed", err));
+});
+
+el("rematch-decline-btn").addEventListener("click", () => {
+  Online.declineRematch(state.roomCode).catch(err => console.error("declineRematch failed", err));
 });
 
 el("missed-toggle").addEventListener("click", () => {

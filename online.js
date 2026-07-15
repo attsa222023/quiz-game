@@ -9,6 +9,7 @@ import {
   onSnapshot,
   runTransaction,
   serverTimestamp,
+  Timestamp,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Excludes visually-ambiguous characters (0/O, 1/I) since codes get shared
@@ -23,6 +24,10 @@ function randomRoomCode() {
     code += ROOM_CODE_CHARS[Math.floor(Math.random() * ROOM_CODE_CHARS.length)];
   }
   return code;
+}
+
+function emptyRematch() {
+  return { offeredBy: null, categoryIndex: null, lang: null, timeLimit: null, accepted: { 1: false, 2: false } };
 }
 
 async function createRoom(categoryIndex, lang, timeLimit) {
@@ -57,8 +62,11 @@ async function createRoom(categoryIndex, lang, timeLimit) {
       2: null,
     },
     winner: null,
+    rematch: emptyRematch(),
     createdAt: now,
-    expiresAt: now + ROOM_TTL_MS,
+    // Firestore's native TTL feature requires an actual Timestamp-typed
+    // field - a plain number is silently ignored by it.
+    expiresAt: Timestamp.fromMillis(now + ROOM_TTL_MS),
   };
   await setDoc(ref, roomData);
   return { roomCode: code, player: 1, roomData };
@@ -210,6 +218,76 @@ async function forfeitMatch(roomCode, forfeitingPlayer) {
   await updateDoc(ref, { status: "finished", winner });
 }
 
+// Plain write, not a transaction: Firestore replaces the whole `rematch`
+// map atomically on a non-dotted-path write, so a simultaneous double-offer
+// from both players just has one clean last-write-win with no torn state -
+// acceptable given this project's existing client-trust risk tolerance
+// (same as the rest of online play).
+async function offerRematch(roomCode, byPlayer, categoryIndex, lang, timeLimit) {
+  const db = window.Firebase.db;
+  const ref = doc(db, "rooms", roomCode);
+  const otherPlayer = byPlayer === 1 ? 2 : 1;
+  await updateDoc(ref, {
+    rematch: {
+      offeredBy: byPlayer,
+      categoryIndex,
+      lang: lang || null,
+      timeLimit,
+      accepted: { [byPlayer]: true, [otherPlayer]: false },
+    },
+  });
+}
+
+// Transaction: must atomically decide "are both players now accepted" and
+// reset the match in the same write. No-ops if there's no active offer -
+// this also makes a double-click on Accept safe (the second call reads the
+// already-reset doc and finds nothing to do).
+async function acceptRematch(roomCode, myPlayer) {
+  const db = window.Firebase.db;
+  const ref = doc(db, "rooms", roomCode);
+
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return;
+    const d = snap.data();
+    if (!d.rematch || !d.rematch.offeredBy) return;
+
+    const updatedAccepted = { ...d.rematch.accepted, [myPlayer]: true };
+    if (updatedAccepted[1] && updatedAccepted[2]) {
+      tx.update(ref, {
+        categoryIndex: d.rematch.categoryIndex,
+        lang: d.rematch.lang,
+        timeLimit: d.rematch.timeLimit,
+        status: "active",
+        turn: 1,
+        consecutiveMisses: 0,
+        slotStartedAt: serverTimestamp(),
+        found: [],
+        players: {
+          1: { uid: d.players["1"].uid, score: 0, basePoints: 0, bonusPoints: 0, correct: 0 },
+          2: { uid: d.players["2"].uid, score: 0, basePoints: 0, bonusPoints: 0, correct: 0 },
+        },
+        winner: null,
+        rematch: emptyRematch(),
+        // Fresh TTL window for the continuing session, mirroring
+        // createRoom's own precedent of setting expiresAt exactly when a
+        // room becomes newly live.
+        expiresAt: Timestamp.fromMillis(Date.now() + ROOM_TTL_MS),
+      });
+    } else {
+      tx.update(ref, { [`rematch.accepted.${myPlayer}`]: true });
+    }
+  });
+}
+
+// Resets rematch back to empty - used both to decline an incoming offer and
+// to withdraw one's own (e.g. via the leaveOnlineRoom cleanup in game.js).
+async function declineRematch(roomCode) {
+  const db = window.Firebase.db;
+  const ref = doc(db, "rooms", roomCode);
+  await updateDoc(ref, { rematch: emptyRematch() });
+}
+
 window.Online = {
   createRoom,
   joinRoom,
@@ -218,4 +296,7 @@ window.Online = {
   writeCorrectAnswer,
   writeTimeout,
   forfeitMatch,
+  offerRematch,
+  acceptRematch,
+  declineRematch,
 };
