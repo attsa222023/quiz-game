@@ -263,47 +263,9 @@ el("time-slider").addEventListener("input", () => {
 });
 
 /* ---------------- Game logic ---------------- */
-function normalize(str) {
-  return str
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]/gu, "");
-}
-
-function resolveCategorySource(cat, lang) {
-  return cat.languages ? cat.languages[lang] : cat;
-}
-
-function buildAnswerKey(cat, lang) {
-  // maps normalized alias/name -> canonical answer string
-  const source = resolveCategorySource(cat, lang);
-  const map = new Map();
-  source.answers.forEach(ans => {
-    map.set(normalize(ans), ans);
-  });
-  if (source.aliases) {
-    Object.entries(source.aliases).forEach(([canonical, aliasList]) => {
-      aliasList.forEach(a => map.set(normalize(a), canonical));
-    });
-  }
-  return map;
-}
-
-function highScoreKeyFor(cat, lang) {
-  if (!cat.languages) return cat.name;
-  return `${cat.name} (${lang === "ja" ? "日本語" : "English"})`;
-}
-
-// Pure: derives the not-yet-found answers from the full answer list and a
-// found[] array, rather than storing "remaining" as its own piece of state.
-// For online mode this lets Firestore carry only the append-only found[]
-// list instead of duplicating/re-syncing a shrinking remaining set too.
-function computeRemaining(answers, found) {
-  const foundNames = new Set(found.map(f => f.name));
-  return answers.filter(a => !foundNames.has(a));
-}
+// normalize/resolveCategorySource/buildAnswerKey/highScoreKeyFor/
+// computeRemaining now live in logic.js (loaded before this file in
+// index.html) so the test suite can exercise them without touching the DOM.
 
 /* ---------------- Online versus ---------------- */
 async function createOnlineRoom(catIndex, lang) {

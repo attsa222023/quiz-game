@@ -45,9 +45,17 @@ Pick a category, then name as many answers as you can. Each answer gets its own 
 - `index.html` — markup
 - `style.css` — all styling
 - `categories.js` — the category/answer data
+- `logic.js` — pure answer-matching/scoring-key helpers (no DOM/Firebase), shared by `game.js` and the test suite
 - `game.js` — game state and logic (solo, local versus, and online versus)
 - `firebase-init.js` / `online.js` — Firebase Firestore wiring for Online Versus mode (see below)
 - `firestore.rules` — Firestore security rules (deployed via the Firebase console, not part of the app bundle)
+- `test.html` / `test/` — unit tests for `logic.js` (see below)
+
+## Tests
+
+`logic.js` (answer normalization/alias matching, category-source resolution, score-record keys, remaining-answers computation) has unit tests in `test/logic.test.js`, run by a tiny zero-dependency harness (`test/test-runner.js`) — no Node/npm required, matching this project's no-build-step approach. Open `test.html` in a browser (or via a static file server, or directly over `file://`) to run them; results render on the page and the tab title shows a live `N/M passing` count.
+
+Everything else (DOM rendering, Firestore sync) is intentionally left to manual verification rather than automated tests — the real bugs this project has hit so far have been cross-device timing/state-sync issues that only show up when actually driving the app, not something a unit test would catch.
 
 ## Online play
 
