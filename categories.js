@@ -460,5 +460,39 @@ const CATEGORIES = [
       "The Artist": ["Artist"],
       "The Shape of Water": ["Shape of Water"]
     }
+  },
+  {
+    // Source: zh.wikipedia.org "台灣姓氏列表", ranked 依中華民國內政部 2023年10月
+    // 全國姓名統計分析. Several ranked entries are variant-character forms of
+    // what's etymologically the same surname (e.g. 溫/温, 黃/黄, 鍾/鐘,
+    // 塗/涂/凃) - the source explicitly counts these as separate ranked
+    // entries (Taiwan's household registry recorded them as distinct
+    // characters), so they're kept as separate answers here too rather than
+    // merged, matching the source's own methodology. ZH only for now,
+    // structured with `languages` so an English/pinyin set could be added
+    // later without reshaping this entry.
+    name: "Taiwanese Surnames (Top 150)",
+    group: "Culture",
+    languages: {
+      zh: {
+        answers: [
+          "陳","林","黃","張","李","王","吳","劉","蔡","楊",
+          "許","鄭","謝","洪","郭","邱","曾","廖","賴","徐",
+          "周","葉","蘇","莊","江","呂","何","蕭","羅","高",
+          "潘","簡","朱","鍾","游","彭","詹","胡","施","沈",
+          "余","盧","梁","趙","顏","柯","翁","魏","孫","戴",
+          "范","方","宋","鄧","杜","侯","傅","曹","薛","阮",
+          "丁","卓","馬","温","董","藍","古","石","紀","唐",
+          "蔣","姚","連","歐","馮","程","湯","田","康","黄",
+          "姜","白","汪","尤","鄒","黎","巫","鐘","涂","龔",
+          "嚴","韓","袁","金","童","陸","柳","凃","夏","邵",
+          "錢","伍","倪","溫","駱","譚","于","甘","熊","任",
+          "秦","章","毛","官","顧","史","萬","俞","粘","雷",
+          "饒","張簡","闕","凌","武","孔","尹","崔","辛","歐陽",
+          "辜","陶","段","易","龍","韋","池","葛","褚","孟",
+          "麥","殷","莫","文","賀","賈","管","關","包","向"
+        ]
+      }
+    }
   }
 ];
