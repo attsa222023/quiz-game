@@ -10,6 +10,11 @@ function normalize(str) {
     .replace(/[^\p{L}\p{N}]/gu, "");
 }
 
+// Shared between highScoreKeyFor here and the language-picker card in
+// game.js's renderCategoryList - keep any new language added in categories.js
+// (a `languages` object key) in sync with a label here too.
+const LANG_LABELS = { en: "English", ja: "日本語", zh: "繁體中文" };
+
 function resolveCategorySource(cat, lang) {
   return cat.languages ? cat.languages[lang] : cat;
 }
@@ -31,7 +36,7 @@ function buildAnswerKey(cat, lang) {
 
 function highScoreKeyFor(cat, lang) {
   if (!cat.languages) return cat.name;
-  return `${cat.name} (${lang === "ja" ? "日本語" : "English"})`;
+  return `${cat.name} (${LANG_LABELS[lang] || lang})`;
 }
 
 // Derives the not-yet-found answers from the full answer list and a found[]

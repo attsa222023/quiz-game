@@ -63,6 +63,7 @@ let rematchMode = false;
 let rematchRoomCode = null;
 let rematchMyPlayer = null;
 const GROUP_ORDER = ["Geography", "Chemistry", "Sports", "Entertainment"];
+const PLAY_LABELS = { en: "Play in English", ja: "日本語でプレイ", zh: "用繁體中文玩" };
 
 /* ---------------- Elements ---------------- */
 const el = (id) => document.getElementById(id);
@@ -121,18 +122,21 @@ function renderCategoryList() {
     if (cat.languages) {
       const card = document.createElement("div");
       card.className = "cat-btn lang-cat";
-      const count = cat.languages.en.answers.length;
-      const enHigh = getHighScore(highScoreKeyFor(cat, "en"));
-      const jaHigh = getHighScore(highScoreKeyFor(cat, "ja"));
-      const enMost = getMostAnswered(highScoreKeyFor(cat, "en"));
-      const jaMost = getMostAnswered(highScoreKeyFor(cat, "ja"));
+      // Each language can have its own answer count (e.g. Elements' Chinese
+      // set is a smaller subset than its English one - see categories.js),
+      // so build the summary per-language instead of assuming they match.
+      const langs = Object.keys(cat.languages);
+      const summarize = (getter) => langs.map(l => `${getter(l)} (${LANG_LABELS[l] || l})`).join(" / ");
+      const countSummary = summarize(l => cat.languages[l].answers.length);
+      const highSummary = summarize(l => getHighScore(highScoreKeyFor(cat, l)));
+      const mostSummary = summarize(l => getMostAnswered(highScoreKeyFor(cat, l)));
+      const buttonsHtml = langs.map(l =>
+        `<button type="button" class="lang-btn" data-lang="${l}">${PLAY_LABELS[l] || `Play in ${LANG_LABELS[l] || l}`}</button>`
+      ).join("");
       card.innerHTML = `
         <div class="lang-cat-name">${cat.name}</div>
-        <span class="count">${count} answers &middot; ${selectedTimeLimit}s per answer &middot; High Score: ${enHigh} (English) / ${jaHigh} (日本語) &middot; Most Answered: ${enMost} (English) / ${jaMost} (日本語)</span>
-        <div class="lang-buttons">
-          <button type="button" class="lang-btn" data-lang="en">Play in English</button>
-          <button type="button" class="lang-btn" data-lang="ja">日本語でプレイ</button>
-        </div>
+        <span class="count">${countSummary} answers &middot; ${selectedTimeLimit}s per answer &middot; High Score: ${highSummary} &middot; Most Answered: ${mostSummary}</span>
+        <div class="lang-buttons">${buttonsHtml}</div>
       `;
       card.querySelectorAll(".lang-btn").forEach(langBtn => {
         langBtn.addEventListener("click", () => {

@@ -15,7 +15,7 @@ Pick a category, then name as many answers as you can. Each answer gets its own 
 - **Online Versus mode** — play against someone on a different device: create a match to get a short room code, share it, and play in real time once they join (see [Online play](#online-play) below)
 - **Adjustable time limit** — 3–30 seconds per answer, set before you start
 - **High Score and Most Answered records** — tracked separately per category (and per language, where applicable), saved locally in your browser
-- **Language choice** — Japan Prefectures can be played in English or Japanese
+- **Language choice** — Japan Prefectures (English/Japanese) and Elements of the Periodic Table (English/Traditional Chinese) can each be played in either language
 - **Alias-aware answer matching** — accepts common abbreviations, nicknames, and accented/unaccented spellings (e.g. "USA" for United States, "Curacao" for Curaçao, "Doncic" for Dončić)
 
 ## Categories
@@ -28,7 +28,7 @@ Pick a category, then name as many answers as you can. Each answer gets its own 
 - Japan Prefectures (English / 日本語)
 
 **Chemistry**
-- Elements of the Periodic Table (accepts chemical symbols too, e.g. "Fe" for Iron)
+- Elements of the Periodic Table (English / 繁體中文 — accepts chemical symbols too, e.g. "Fe" for Iron; the Traditional Chinese set covers elements 1-103, stopping short of the synthetic "superheavy" elements whose Chinese names are still unsettled)
 
 **Sports**
 - Countries that have Qualified for the FIFA World Cup

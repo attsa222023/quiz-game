@@ -84,53 +84,105 @@ const CATEGORIES = [
   {
     name: "Elements of the Periodic Table",
     group: "Chemistry",
-    answers: [
-      "Hydrogen","Helium","Lithium","Beryllium","Boron","Carbon","Nitrogen","Oxygen","Fluorine","Neon",
-      "Sodium","Magnesium","Aluminium","Silicon","Phosphorus","Sulfur","Chlorine","Argon","Potassium","Calcium",
-      "Scandium","Titanium","Vanadium","Chromium","Manganese","Iron","Cobalt","Nickel","Copper","Zinc",
-      "Gallium","Germanium","Arsenic","Selenium","Bromine","Krypton","Rubidium","Strontium","Yttrium","Zirconium",
-      "Niobium","Molybdenum","Technetium","Ruthenium","Rhodium","Palladium","Silver","Cadmium","Indium","Tin",
-      "Antimony","Tellurium","Iodine","Xenon","Caesium","Barium","Lanthanum","Cerium","Praseodymium","Neodymium",
-      "Promethium","Samarium","Europium","Gadolinium","Terbium","Dysprosium","Holmium","Erbium","Thulium","Ytterbium",
-      "Lutetium","Hafnium","Tantalum","Tungsten","Rhenium","Osmium","Iridium","Platinum","Gold","Mercury",
-      "Thallium","Lead","Bismuth","Polonium","Astatine","Radon","Francium","Radium","Actinium","Thorium",
-      "Protactinium","Uranium","Neptunium","Plutonium","Americium","Curium","Berkelium","Californium","Einsteinium","Fermium",
-      "Mendelevium","Nobelium","Lawrencium","Rutherfordium","Dubnium","Seaborgium","Bohrium","Hassium","Meitnerium","Darmstadtium",
-      "Roentgenium","Copernicium","Nihonium","Flerovium","Moscovium","Livermorium","Tennessine","Oganesson"
-    ],
-    // Accepts each element's official chemical symbol as an answer alongside
-    // the full name (e.g. "Fe" for Iron), plus the common American/British
-    // spelling variants - same alias mechanism used elsewhere (e.g. G20's
-    // "USA" for "United States").
-    aliases: {
-      "Hydrogen": ["H"], "Helium": ["He"], "Lithium": ["Li"], "Beryllium": ["Be"], "Boron": ["B"],
-      "Carbon": ["C"], "Nitrogen": ["N"], "Oxygen": ["O"], "Fluorine": ["F"], "Neon": ["Ne"],
-      "Sodium": ["Na"], "Magnesium": ["Mg"], "Aluminium": ["Al", "Aluminum"], "Silicon": ["Si"],
-      "Phosphorus": ["P"], "Sulfur": ["S", "Sulphur"], "Chlorine": ["Cl"], "Argon": ["Ar"],
-      "Potassium": ["K"], "Calcium": ["Ca"], "Scandium": ["Sc"], "Titanium": ["Ti"],
-      "Vanadium": ["V"], "Chromium": ["Cr"], "Manganese": ["Mn"], "Iron": ["Fe"], "Cobalt": ["Co"],
-      "Nickel": ["Ni"], "Copper": ["Cu"], "Zinc": ["Zn"], "Gallium": ["Ga"], "Germanium": ["Ge"],
-      "Arsenic": ["As"], "Selenium": ["Se"], "Bromine": ["Br"], "Krypton": ["Kr"],
-      "Rubidium": ["Rb"], "Strontium": ["Sr"], "Yttrium": ["Y"], "Zirconium": ["Zr"],
-      "Niobium": ["Nb"], "Molybdenum": ["Mo"], "Technetium": ["Tc"], "Ruthenium": ["Ru"],
-      "Rhodium": ["Rh"], "Palladium": ["Pd"], "Silver": ["Ag"], "Cadmium": ["Cd"], "Indium": ["In"],
-      "Tin": ["Sn"], "Antimony": ["Sb"], "Tellurium": ["Te"], "Iodine": ["I"], "Xenon": ["Xe"],
-      "Caesium": ["Cs", "Cesium"], "Barium": ["Ba"], "Lanthanum": ["La"], "Cerium": ["Ce"],
-      "Praseodymium": ["Pr"], "Neodymium": ["Nd"], "Promethium": ["Pm"], "Samarium": ["Sm"],
-      "Europium": ["Eu"], "Gadolinium": ["Gd"], "Terbium": ["Tb"], "Dysprosium": ["Dy"],
-      "Holmium": ["Ho"], "Erbium": ["Er"], "Thulium": ["Tm"], "Ytterbium": ["Yb"],
-      "Lutetium": ["Lu"], "Hafnium": ["Hf"], "Tantalum": ["Ta"], "Tungsten": ["W", "Wolfram"],
-      "Rhenium": ["Re"], "Osmium": ["Os"], "Iridium": ["Ir"], "Platinum": ["Pt"], "Gold": ["Au"],
-      "Mercury": ["Hg"], "Thallium": ["Tl"], "Lead": ["Pb"], "Bismuth": ["Bi"], "Polonium": ["Po"],
-      "Astatine": ["At"], "Radon": ["Rn"], "Francium": ["Fr"], "Radium": ["Ra"],
-      "Actinium": ["Ac"], "Thorium": ["Th"], "Protactinium": ["Pa"], "Uranium": ["U"],
-      "Neptunium": ["Np"], "Plutonium": ["Pu"], "Americium": ["Am"], "Curium": ["Cm"],
-      "Berkelium": ["Bk"], "Californium": ["Cf"], "Einsteinium": ["Es"], "Fermium": ["Fm"],
-      "Mendelevium": ["Md"], "Nobelium": ["No"], "Lawrencium": ["Lr"], "Rutherfordium": ["Rf"],
-      "Dubnium": ["Db"], "Seaborgium": ["Sg"], "Bohrium": ["Bh"], "Hassium": ["Hs"],
-      "Meitnerium": ["Mt"], "Darmstadtium": ["Ds"], "Roentgenium": ["Rg"], "Copernicium": ["Cn"],
-      "Nihonium": ["Nh"], "Flerovium": ["Fl"], "Moscovium": ["Mc"], "Livermorium": ["Lv"],
-      "Tennessine": ["Ts"], "Oganesson": ["Og"]
+    languages: {
+      en: {
+        answers: [
+          "Hydrogen","Helium","Lithium","Beryllium","Boron","Carbon","Nitrogen","Oxygen","Fluorine","Neon",
+          "Sodium","Magnesium","Aluminium","Silicon","Phosphorus","Sulfur","Chlorine","Argon","Potassium","Calcium",
+          "Scandium","Titanium","Vanadium","Chromium","Manganese","Iron","Cobalt","Nickel","Copper","Zinc",
+          "Gallium","Germanium","Arsenic","Selenium","Bromine","Krypton","Rubidium","Strontium","Yttrium","Zirconium",
+          "Niobium","Molybdenum","Technetium","Ruthenium","Rhodium","Palladium","Silver","Cadmium","Indium","Tin",
+          "Antimony","Tellurium","Iodine","Xenon","Caesium","Barium","Lanthanum","Cerium","Praseodymium","Neodymium",
+          "Promethium","Samarium","Europium","Gadolinium","Terbium","Dysprosium","Holmium","Erbium","Thulium","Ytterbium",
+          "Lutetium","Hafnium","Tantalum","Tungsten","Rhenium","Osmium","Iridium","Platinum","Gold","Mercury",
+          "Thallium","Lead","Bismuth","Polonium","Astatine","Radon","Francium","Radium","Actinium","Thorium",
+          "Protactinium","Uranium","Neptunium","Plutonium","Americium","Curium","Berkelium","Californium","Einsteinium","Fermium",
+          "Mendelevium","Nobelium","Lawrencium","Rutherfordium","Dubnium","Seaborgium","Bohrium","Hassium","Meitnerium","Darmstadtium",
+          "Roentgenium","Copernicium","Nihonium","Flerovium","Moscovium","Livermorium","Tennessine","Oganesson"
+        ],
+        // Accepts each element's official chemical symbol as an answer
+        // alongside the full name (e.g. "Fe" for Iron), plus the common
+        // American/British spelling variants - same alias mechanism used
+        // elsewhere (e.g. G20's "USA" for "United States").
+        aliases: {
+          "Hydrogen": ["H"], "Helium": ["He"], "Lithium": ["Li"], "Beryllium": ["Be"], "Boron": ["B"],
+          "Carbon": ["C"], "Nitrogen": ["N"], "Oxygen": ["O"], "Fluorine": ["F"], "Neon": ["Ne"],
+          "Sodium": ["Na"], "Magnesium": ["Mg"], "Aluminium": ["Al", "Aluminum"], "Silicon": ["Si"],
+          "Phosphorus": ["P"], "Sulfur": ["S", "Sulphur"], "Chlorine": ["Cl"], "Argon": ["Ar"],
+          "Potassium": ["K"], "Calcium": ["Ca"], "Scandium": ["Sc"], "Titanium": ["Ti"],
+          "Vanadium": ["V"], "Chromium": ["Cr"], "Manganese": ["Mn"], "Iron": ["Fe"], "Cobalt": ["Co"],
+          "Nickel": ["Ni"], "Copper": ["Cu"], "Zinc": ["Zn"], "Gallium": ["Ga"], "Germanium": ["Ge"],
+          "Arsenic": ["As"], "Selenium": ["Se"], "Bromine": ["Br"], "Krypton": ["Kr"],
+          "Rubidium": ["Rb"], "Strontium": ["Sr"], "Yttrium": ["Y"], "Zirconium": ["Zr"],
+          "Niobium": ["Nb"], "Molybdenum": ["Mo"], "Technetium": ["Tc"], "Ruthenium": ["Ru"],
+          "Rhodium": ["Rh"], "Palladium": ["Pd"], "Silver": ["Ag"], "Cadmium": ["Cd"], "Indium": ["In"],
+          "Tin": ["Sn"], "Antimony": ["Sb"], "Tellurium": ["Te"], "Iodine": ["I"], "Xenon": ["Xe"],
+          "Caesium": ["Cs", "Cesium"], "Barium": ["Ba"], "Lanthanum": ["La"], "Cerium": ["Ce"],
+          "Praseodymium": ["Pr"], "Neodymium": ["Nd"], "Promethium": ["Pm"], "Samarium": ["Sm"],
+          "Europium": ["Eu"], "Gadolinium": ["Gd"], "Terbium": ["Tb"], "Dysprosium": ["Dy"],
+          "Holmium": ["Ho"], "Erbium": ["Er"], "Thulium": ["Tm"], "Ytterbium": ["Yb"],
+          "Lutetium": ["Lu"], "Hafnium": ["Hf"], "Tantalum": ["Ta"], "Tungsten": ["W", "Wolfram"],
+          "Rhenium": ["Re"], "Osmium": ["Os"], "Iridium": ["Ir"], "Platinum": ["Pt"], "Gold": ["Au"],
+          "Mercury": ["Hg"], "Thallium": ["Tl"], "Lead": ["Pb"], "Bismuth": ["Bi"], "Polonium": ["Po"],
+          "Astatine": ["At"], "Radon": ["Rn"], "Francium": ["Fr"], "Radium": ["Ra"],
+          "Actinium": ["Ac"], "Thorium": ["Th"], "Protactinium": ["Pa"], "Uranium": ["U"],
+          "Neptunium": ["Np"], "Plutonium": ["Pu"], "Americium": ["Am"], "Curium": ["Cm"],
+          "Berkelium": ["Bk"], "Californium": ["Cf"], "Einsteinium": ["Es"], "Fermium": ["Fm"],
+          "Mendelevium": ["Md"], "Nobelium": ["No"], "Lawrencium": ["Lr"], "Rutherfordium": ["Rf"],
+          "Dubnium": ["Db"], "Seaborgium": ["Sg"], "Bohrium": ["Bh"], "Hassium": ["Hs"],
+          "Meitnerium": ["Mt"], "Darmstadtium": ["Ds"], "Roentgenium": ["Rg"], "Copernicium": ["Cn"],
+          "Nihonium": ["Nh"], "Flerovium": ["Fl"], "Moscovium": ["Mc"], "Livermorium": ["Lv"],
+          "Tennessine": ["Ts"], "Oganesson": ["Og"]
+        }
+      },
+      // Deliberately stops at Lawrencium (103): the remaining "superheavy"
+      // synthetic elements (Rutherfordium onward) use rare, still-unsettled
+      // Traditional Chinese characters that even standard fonts/IMEs often
+      // don't support well - not confident enough in those to ship them.
+      zh: {
+        answers: [
+          "氫","氦","鋰","鈹","硼","碳","氮","氧","氟","氖",
+          "鈉","鎂","鋁","矽","磷","硫","氯","氬","鉀","鈣",
+          "鈧","鈦","釩","鉻","錳","鐵","鈷","鎳","銅","鋅",
+          "鎵","鍺","砷","硒","溴","氪","銣","鍶","釔","鋯",
+          "鈮","鉬","鎝","釕","銠","鈀","銀","鎘","銦","錫",
+          "銻","碲","碘","氙","銫","鋇","鑭","鈰","鐠","釹",
+          "鉕","釤","銪","釓","鋱","鏑","鈥","鉺","銩","鐿",
+          "鎦","鉿","鉭","鎢","錸","鋨","銥","鉑","金","汞",
+          "鉈","鉛","鉍","釙","砈","氡","鍅","鐳","錒","釷",
+          "鏷","鈾","錼","鈽","鋂","鋦","鉳","鐦","鑀","鐨",
+          "鍆","鍩","鐒"
+        ],
+        // The international chemical symbol (e.g. "Fe") is accepted here
+        // too, since symbols are language-neutral and this is a nice bit of
+        // free reuse from the English side's own symbol list.
+        aliases: {
+          "氫": ["H"], "氦": ["He"], "鋰": ["Li"], "鈹": ["Be"], "硼": ["B"],
+          "碳": ["C"], "氮": ["N"], "氧": ["O"], "氟": ["F"], "氖": ["Ne"],
+          "鈉": ["Na"], "鎂": ["Mg"], "鋁": ["Al"], "矽": ["Si"],
+          "磷": ["P"], "硫": ["S"], "氯": ["Cl"], "氬": ["Ar"],
+          "鉀": ["K"], "鈣": ["Ca"], "鈧": ["Sc"], "鈦": ["Ti"],
+          "釩": ["V"], "鉻": ["Cr"], "錳": ["Mn"], "鐵": ["Fe"], "鈷": ["Co"],
+          "鎳": ["Ni"], "銅": ["Cu"], "鋅": ["Zn"], "鎵": ["Ga"], "鍺": ["Ge"],
+          "砷": ["As"], "硒": ["Se"], "溴": ["Br"], "氪": ["Kr"],
+          "銣": ["Rb"], "鍶": ["Sr"], "釔": ["Y"], "鋯": ["Zr"],
+          "鈮": ["Nb"], "鉬": ["Mo"], "鎝": ["Tc"], "釕": ["Ru"],
+          "銠": ["Rh"], "鈀": ["Pd"], "銀": ["Ag"], "鎘": ["Cd"], "銦": ["In"],
+          "錫": ["Sn"], "銻": ["Sb"], "碲": ["Te"], "碘": ["I"], "氙": ["Xe"],
+          "銫": ["Cs"], "鋇": ["Ba"], "鑭": ["La"], "鈰": ["Ce"],
+          "鐠": ["Pr"], "釹": ["Nd"], "鉕": ["Pm"], "釤": ["Sm"],
+          "銪": ["Eu"], "釓": ["Gd"], "鋱": ["Tb"], "鏑": ["Dy"],
+          "鈥": ["Ho"], "鉺": ["Er"], "銩": ["Tm"], "鐿": ["Yb"],
+          "鎦": ["Lu"], "鉿": ["Hf"], "鉭": ["Ta"], "鎢": ["W"],
+          "錸": ["Re"], "鋨": ["Os"], "銥": ["Ir"], "鉑": ["Pt"], "金": ["Au"],
+          "汞": ["Hg"], "鉈": ["Tl"], "鉛": ["Pb"], "鉍": ["Bi"], "釙": ["Po"],
+          "砈": ["At"], "氡": ["Rn"], "鍅": ["Fr"], "鐳": ["Ra"],
+          "錒": ["Ac"], "釷": ["Th"], "鏷": ["Pa"], "鈾": ["U"],
+          "錼": ["Np"], "鈽": ["Pu"], "鋂": ["Am"], "鋦": ["Cm"],
+          "鉳": ["Bk"], "鐦": ["Cf"], "鑀": ["Es"], "鐨": ["Fm"],
+          "鍆": ["Md"], "鍩": ["No"], "鐒": ["Lr"]
+        }
+      }
     }
   },
   {
