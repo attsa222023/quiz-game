@@ -81,6 +81,8 @@ let onlineRoomUnsubscribe = null;
 let rematchMode = false;
 let rematchRoomCode = null;
 let rematchMyPlayer = null;
+let searchQuery = "";
+let languageFilter = "any";
 const GROUP_ORDER = ["Geography", "Science", "Sports", "Entertainment", "Culture"];
 const PLAY_LABELS = { en: "Play in English", ja: "日本語でプレイ", zh: "用繁體中文玩" };
 
@@ -138,70 +140,152 @@ function openGroup(group) {
   el("cat-list-wrap").classList.remove("hidden");
 }
 
+// Builds a single category's button/card, shared by the group-scoped list
+// and the flat cross-group search results (which additionally need a group
+// label, since categories from different groups are mixed together there).
+function buildCategoryElement(cat, idx, opts) {
+  const showGroup = !!(opts && opts.showGroup);
+  const groupLabel = showGroup ? `<span class="group-label">${cat.group}</span>` : "";
+
+  if (cat.languages) {
+    const card = document.createElement("div");
+    card.className = "cat-btn lang-cat";
+    // Each language can have its own answer count (e.g. Elements' Chinese
+    // set is a smaller subset than its English one - see categories.js),
+    // so build the summary per-language instead of assuming they match.
+    const langs = Object.keys(cat.languages);
+    const summarize = (getter) => langs.map(l => `${getter(l)} (${LANG_LABELS[l] || l})`).join(" / ");
+    const countSummary = summarize(l => cat.languages[l].answers.length);
+    const highSummary = summarize(l => getHighScore(highScoreKeyFor(cat, l)));
+    const mostSummary = summarize(l => getMostAnswered(highScoreKeyFor(cat, l)));
+    // Clearing is tracked per-language (same key scheme as high score), so
+    // the checkmark goes on each language's own button rather than the
+    // shared category name.
+    const buttonsHtml = langs.map(l => {
+      const label = PLAY_LABELS[l] || `Play in ${LANG_LABELS[l] || l}`;
+      const clearedMark = isCleared(highScoreKeyFor(cat, l)) ? ' <span class="cleared-badge" title="Cleared before">&check;</span>' : "";
+      return `<button type="button" class="lang-btn" data-lang="${l}">${label}${clearedMark}</button>`;
+    }).join("");
+    card.innerHTML = `
+      ${groupLabel}
+      <div class="lang-cat-name">${cat.name}</div>
+      <span class="count">${countSummary} answers &middot; ${selectedTimeLimit}s per answer &middot; High Score: ${highSummary} &middot; Most Answered: ${mostSummary}</span>
+      <div class="lang-buttons">${buttonsHtml}</div>
+    `;
+    card.querySelectorAll(".lang-btn").forEach(langBtn => {
+      langBtn.addEventListener("click", () => {
+        if (rematchMode) {
+          offerRematchFlow(idx, langBtn.dataset.lang);
+        } else if (selectedMode === "online") {
+          createOnlineRoom(idx, langBtn.dataset.lang);
+        } else {
+          startGame(idx, selectedMode, langBtn.dataset.lang);
+        }
+      });
+    });
+    return card;
+  }
+
+  const btn = document.createElement("button");
+  btn.className = "cat-btn";
+  const clearedMark = isCleared(cat.name) ? '<span class="cleared-badge" title="Cleared before">&check; </span>' : "";
+  btn.innerHTML = `${groupLabel}${clearedMark}${cat.name}<span class="count">${cat.answers.length} answers &middot; ${selectedTimeLimit}s per answer &middot; High Score: ${getHighScore(cat.name)} &middot; Most Answered: ${getMostAnswered(cat.name)}</span>`;
+  btn.addEventListener("click", () => {
+    if (rematchMode) {
+      offerRematchFlow(idx, undefined);
+    } else if (selectedMode === "online") {
+      createOnlineRoom(idx, undefined);
+    } else {
+      startGame(idx, selectedMode);
+    }
+  });
+  return btn;
+}
+
 function renderCategoryList() {
   const list = el("cat-list");
   list.innerHTML = "";
   CATEGORIES.forEach((cat, idx) => {
     if (cat.group !== selectedGroup) return;
-
-    if (cat.languages) {
-      const card = document.createElement("div");
-      card.className = "cat-btn lang-cat";
-      // Each language can have its own answer count (e.g. Elements' Chinese
-      // set is a smaller subset than its English one - see categories.js),
-      // so build the summary per-language instead of assuming they match.
-      const langs = Object.keys(cat.languages);
-      const summarize = (getter) => langs.map(l => `${getter(l)} (${LANG_LABELS[l] || l})`).join(" / ");
-      const countSummary = summarize(l => cat.languages[l].answers.length);
-      const highSummary = summarize(l => getHighScore(highScoreKeyFor(cat, l)));
-      const mostSummary = summarize(l => getMostAnswered(highScoreKeyFor(cat, l)));
-      // Clearing is tracked per-language (same key scheme as high score), so
-      // the checkmark goes on each language's own button rather than the
-      // shared category name.
-      const buttonsHtml = langs.map(l => {
-        const label = PLAY_LABELS[l] || `Play in ${LANG_LABELS[l] || l}`;
-        const clearedMark = isCleared(highScoreKeyFor(cat, l)) ? ' <span class="cleared-badge" title="Cleared before">&check;</span>' : "";
-        return `<button type="button" class="lang-btn" data-lang="${l}">${label}${clearedMark}</button>`;
-      }).join("");
-      card.innerHTML = `
-        <div class="lang-cat-name">${cat.name}</div>
-        <span class="count">${countSummary} answers &middot; ${selectedTimeLimit}s per answer &middot; High Score: ${highSummary} &middot; Most Answered: ${mostSummary}</span>
-        <div class="lang-buttons">${buttonsHtml}</div>
-      `;
-      card.querySelectorAll(".lang-btn").forEach(langBtn => {
-        langBtn.addEventListener("click", () => {
-          if (rematchMode) {
-            offerRematchFlow(idx, langBtn.dataset.lang);
-          } else if (selectedMode === "online") {
-            createOnlineRoom(idx, langBtn.dataset.lang);
-          } else {
-            startGame(idx, selectedMode, langBtn.dataset.lang);
-          }
-        });
-      });
-      list.appendChild(card);
-      return;
-    }
-
-    const btn = document.createElement("button");
-    btn.className = "cat-btn";
-    const clearedMark = isCleared(cat.name) ? '<span class="cleared-badge" title="Cleared before">&check; </span>' : "";
-    btn.innerHTML = `${clearedMark}${cat.name}<span class="count">${cat.answers.length} answers &middot; ${selectedTimeLimit}s per answer &middot; High Score: ${getHighScore(cat.name)} &middot; Most Answered: ${getMostAnswered(cat.name)}</span>`;
-    btn.addEventListener("click", () => {
-      if (rematchMode) {
-        offerRematchFlow(idx, undefined);
-      } else if (selectedMode === "online") {
-        createOnlineRoom(idx, undefined);
-      } else {
-        startGame(idx, selectedMode);
-      }
-    });
-    list.appendChild(btn);
+    list.appendChild(buildCategoryElement(cat, idx, { showGroup: false }));
   });
 }
 
+// A category with no `languages` field is plain English text throughout
+// (every ZH/JA-capable category in this project already uses `languages`,
+// even when only one language is populated so far - see Taipei MRT
+// Stations), so "en" is a safe implicit default for the language filter.
+function categoryLanguages(cat) {
+  return cat.languages ? Object.keys(cat.languages) : ["en"];
+}
+
+function matchesFilters(cat) {
+  if (searchQuery && !cat.name.toLowerCase().includes(searchQuery)) return false;
+  if (languageFilter !== "any" && !categoryLanguages(cat).includes(languageFilter)) return false;
+  return true;
+}
+
+function isSearchActive() {
+  return searchQuery !== "" || languageFilter !== "any";
+}
+
+// Flat, cross-group results for the search box / language filter - skips
+// the usual group-first navigation entirely so a search can surface a
+// match from any group at once.
+function renderSearchResults() {
+  const list = el("cat-list");
+  list.innerHTML = "";
+  const matches = [];
+  CATEGORIES.forEach((cat, idx) => {
+    if (matchesFilters(cat)) matches.push({ cat, idx });
+  });
+  if (matches.length === 0) {
+    list.innerHTML = '<p class="subtitle">No categories match.</p>';
+    return;
+  }
+  matches.forEach(({ cat, idx }) => list.appendChild(buildCategoryElement(cat, idx, { showGroup: true })));
+}
+
+// Single entry point for "what should the menu's category area show right
+// now" - every place that used to call renderMenu() directly for this
+// purpose should call this instead, so an active search/filter is
+// respected no matter how the menu got re-rendered (mode switch, replay,
+// back-to-menu, etc.).
+function updateMenuView() {
+  if (isSearchActive()) {
+    el("group-list").classList.add("hidden");
+    el("cat-list-wrap").classList.remove("hidden");
+    renderSearchResults();
+  } else {
+    renderMenu();
+  }
+}
+
+function populateLanguageFilter() {
+  const select = el("language-filter");
+  const options = ['<option value="any">Any Language</option>'];
+  Object.keys(LANG_LABELS).forEach(code => {
+    options.push(`<option value="${code}">${LANG_LABELS[code]}</option>`);
+  });
+  select.innerHTML = options.join("");
+}
+
+el("category-search").addEventListener("input", () => {
+  searchQuery = el("category-search").value.trim().toLowerCase();
+  updateMenuView();
+});
+
+el("language-filter").addEventListener("change", () => {
+  languageFilter = el("language-filter").value;
+  updateMenuView();
+});
+
 el("group-back-btn").addEventListener("click", () => {
-  renderMenu();
+  searchQuery = "";
+  languageFilter = "any";
+  el("category-search").value = "";
+  el("language-filter").value = "any";
+  updateMenuView();
 });
 
 // Shows/hides the online create-vs-join choice and the local category
@@ -215,8 +299,12 @@ function renderModeArea() {
   el("online-error").classList.add("hidden");
 
   const showCategoryPicker = !isOnline || onlineSubMode === "create";
+  // Hidden (not just inert) while the picker isn't shown - typing into it
+  // during the online "join by code" sub-view would otherwise force cat-
+  // list-wrap open on top of the join form.
+  el("search-bar").classList.toggle("hidden", !showCategoryPicker);
   if (showCategoryPicker) {
-    renderMenu();
+    updateMenuView();
   } else {
     el("group-list").classList.add("hidden");
     el("cat-list-wrap").classList.add("hidden");
@@ -290,7 +378,9 @@ el("copy-code-btn").addEventListener("click", () => {
 el("time-slider").addEventListener("input", () => {
   selectedTimeLimit = parseInt(el("time-slider").value, 10);
   el("time-value").textContent = selectedTimeLimit;
-  if (selectedGroup) {
+  if (isSearchActive()) {
+    renderSearchResults();
+  } else if (selectedGroup) {
     renderCategoryList();
   } else {
     renderGroups();
@@ -954,7 +1044,8 @@ el("replay-btn").addEventListener("click", () => {
     el("online-mode-choice").classList.add("hidden");
     el("online-join-form").classList.add("hidden");
     el("online-error").classList.add("hidden");
-    renderMenu();
+    el("search-bar").classList.remove("hidden");
+    updateMenuView();
     showScreen("menu");
   } else {
     const idx = CATEGORIES.indexOf(state.cat);
@@ -966,7 +1057,8 @@ el("menu-btn").addEventListener("click", () => {
   leaveOnlineRoom();
   clearInterval(tickHandle);
   tickHandle = null;
-  renderMenu();
+  el("search-bar").classList.remove("hidden");
+  updateMenuView();
   showScreen("menu");
 });
 
@@ -986,5 +1078,6 @@ el("missed-toggle").addEventListener("click", () => {
 });
 
 /* ---------------- Init ---------------- */
-renderMenu();
+populateLanguageFilter();
+updateMenuView();
 showScreen("menu");

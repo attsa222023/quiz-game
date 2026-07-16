@@ -77,6 +77,32 @@ h1 {
   color: var(--good);
   font-weight: 700;
 }
+.group-label {
+  display: block;
+  color: var(--accent2);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 4px;
+}
+.search-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.search-bar input[type=search] {
+  flex: 1;
+  min-width: 0;
+}
+.search-bar select {
+  background: var(--panel-2);
+  color: var(--text);
+  border: 2px solid var(--panel-2);
+  border-radius: 10px;
+  padding: 0 10px;
+  font-size: 14px;
+}
 .lang-cat {
   cursor: default;
 }
@@ -228,7 +254,7 @@ input[type=range]::-moz-range-thumb {
 .timer-fill.warn { background: #ffb84f; }
 .timer-fill.danger { background: var(--bad); }
 form { display: flex; gap: 10px; }
-input[type=text] {
+input[type=text], input[type=search] {
   flex: 1;
   min-width: 0;
   padding: 14px 16px;
@@ -240,7 +266,7 @@ input[type=text] {
   outline: none;
   transition: border-color .15s;
 }
-input[type=text]:focus { border-color: var(--accent); }
+input[type=text]:focus, input[type=search]:focus { border-color: var(--accent); }
 input[type=text].shake {
   border-color: var(--bad);
   animation: shake .3s;

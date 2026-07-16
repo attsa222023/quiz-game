@@ -17,6 +17,7 @@ Pick a category, then name as many answers as you can. Each answer gets its own 
 - **High Score and Most Answered records** — tracked separately per category (and per language, where applicable), saved locally in your browser
 - **Language choice** — Japan Prefectures, Naturally Occurring Elements, 88 IAU Constellations, and First Generation Pokémon each support both English and Traditional Chinese
 - **Alias-aware answer matching** — accepts common abbreviations, nicknames, and accented/unaccented spellings (e.g. "USA" for United States, "Curacao" for Curaçao, "Doncic" for Dončić)
+- **Category search and language filter** — search across every group at once by name, and/or filter down to only categories available in a specific language
 
 ## Categories
 
