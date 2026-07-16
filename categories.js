@@ -114,7 +114,7 @@ const CATEGORIES = [
     // same answer count and also sidesteps the rare-character/unsettled-
     // naming risk of the synthetic "superheavy" elements entirely.
     name: "Naturally Occurring Elements (Periodic Table)",
-    group: "Chemistry",
+    group: "Science",
     languages: {
       en: {
         answers: [
@@ -197,6 +197,90 @@ const CATEGORIES = [
           "砈": ["At"], "氡": ["Rn"], "鍅": ["Fr"], "鐳": ["Ra"],
           "錒": ["Ac"], "釷": ["Th"], "鏷": ["Pa"], "鈾": ["U"],
           "錼": ["Np"], "鈽": ["Pu"]
+        }
+      }
+    }
+  },
+  {
+    // Source: en.wikipedia.org "IAU designated constellations" (names +
+    // official 3-letter IAU abbreviations) and zh.wikipedia.org "星座列表"
+    // (Traditional Chinese names) - both fetched as raw wikitext and cross-
+    // matched by Latin name, same rigor as the elements/MRT/surname
+    // categories, since a wrong constellation name is just as checkable.
+    name: "88 IAU Constellations",
+    group: "Science",
+    languages: {
+      en: {
+        answers: [
+          "Andromeda","Antlia","Apus","Aquarius","Aquila","Ara","Aries","Auriga","Boötes","Caelum",
+          "Camelopardalis","Cancer","Canes Venatici","Canis Major","Canis Minor","Capricornus","Carina","Cassiopeia","Centaurus","Cepheus",
+          "Cetus","Chamaeleon","Circinus","Columba","Coma Berenices","Corona Australis","Corona Borealis","Corvus","Crater","Crux",
+          "Cygnus","Delphinus","Dorado","Draco","Equuleus","Eridanus","Fornax","Gemini","Grus","Hercules",
+          "Horologium","Hydra","Hydrus","Indus","Lacerta","Leo","Leo Minor","Lepus","Libra","Lupus",
+          "Lynx","Lyra","Mensa","Microscopium","Monoceros","Musca","Norma","Octans","Ophiuchus","Orion",
+          "Pavo","Pegasus","Perseus","Phoenix","Pictor","Pisces","Piscis Austrinus","Puppis","Pyxis","Reticulum",
+          "Sagitta","Sagittarius","Scorpius","Sculptor","Scutum","Serpens","Sextans","Taurus","Telescopium","Triangulum",
+          "Triangulum Australe","Tucana","Ursa Major","Ursa Minor","Vela","Virgo","Volans","Vulpecula"
+        ],
+        // Official IAU 3-letter abbreviation accepted as an answer too -
+        // same "acronym as answer" idea as the periodic table's chemical
+        // symbols. Skips Ara/Leo since their abbreviation is identical to
+        // the full name already.
+        aliases: {
+          "Andromeda": ["And"], "Antlia": ["Ant"], "Apus": ["Aps"], "Aquarius": ["Aqr"], "Aquila": ["Aql"],
+          "Aries": ["Ari"], "Auriga": ["Aur"], "Boötes": ["Boo"], "Caelum": ["Cae"],
+          "Camelopardalis": ["Cam"], "Cancer": ["Cnc"], "Canes Venatici": ["CVn"], "Canis Major": ["CMa"], "Canis Minor": ["CMi"],
+          "Capricornus": ["Cap"], "Carina": ["Car"], "Cassiopeia": ["Cas"], "Centaurus": ["Cen"], "Cepheus": ["Cep"],
+          "Cetus": ["Cet"], "Chamaeleon": ["Cha"], "Circinus": ["Cir"], "Columba": ["Col"], "Coma Berenices": ["Com"],
+          "Corona Australis": ["CrA"], "Corona Borealis": ["CrB"], "Corvus": ["Crv"], "Crater": ["Crt"], "Crux": ["Cru"],
+          "Cygnus": ["Cyg"], "Delphinus": ["Del"], "Dorado": ["Dor"], "Draco": ["Dra"], "Equuleus": ["Equ"],
+          "Eridanus": ["Eri"], "Fornax": ["For"], "Gemini": ["Gem"], "Grus": ["Gru"], "Hercules": ["Her"],
+          "Horologium": ["Hor"], "Hydra": ["Hya"], "Hydrus": ["Hyi"], "Indus": ["Ind"], "Lacerta": ["Lac"],
+          "Leo Minor": ["LMi"], "Lepus": ["Lep"], "Libra": ["Lib"], "Lupus": ["Lup"],
+          "Lynx": ["Lyn"], "Lyra": ["Lyr"], "Mensa": ["Men"], "Microscopium": ["Mic"], "Monoceros": ["Mon"],
+          "Musca": ["Mus"], "Norma": ["Nor"], "Octans": ["Oct"], "Ophiuchus": ["Oph"], "Orion": ["Ori"],
+          "Pavo": ["Pav"], "Pegasus": ["Peg"], "Perseus": ["Per"], "Phoenix": ["Phe"], "Pictor": ["Pic"],
+          "Pisces": ["Psc"], "Piscis Austrinus": ["PsA"], "Puppis": ["Pup"], "Pyxis": ["Pyx"], "Reticulum": ["Ret"],
+          "Sagitta": ["Sge"], "Sagittarius": ["Sgr"], "Scorpius": ["Sco"], "Sculptor": ["Scl"], "Scutum": ["Sct"],
+          "Serpens": ["Ser"], "Sextans": ["Sex"], "Taurus": ["Tau"], "Telescopium": ["Tel"], "Triangulum": ["Tri"],
+          "Triangulum Australe": ["TrA"], "Tucana": ["Tuc"], "Ursa Major": ["UMa"], "Ursa Minor": ["UMi"],
+          "Vela": ["Vel"], "Virgo": ["Vir"], "Volans": ["Vol"], "Vulpecula": ["Vul"]
+        }
+      },
+      zh: {
+        answers: [
+          "仙女座","唧筒座","天燕座","寶瓶座","天鷹座","天壇座","白羊座","御夫座","牧夫座","雕具座",
+          "鹿豹座","巨蟹座","獵犬座","大犬座","小犬座","摩羯座","船底座","仙后座","半人馬座","仙王座",
+          "鯨魚座","蝘蜓座","圓規座","天鴿座","后髮座","南冕座","北冕座","烏鴉座","巨爵座","南十字座",
+          "天鵝座","海豚座","劍魚座","天龍座","小馬座","波江座","天爐座","雙子座","天鶴座","武仙座",
+          "時鐘座","長蛇座","水蛇座","印第安座","蝎虎座","獅子座","小獅座","天兔座","天秤座","豺狼座",
+          "天貓座","天琴座","山案座","顯微鏡座","麒麟座","蒼蠅座","矩尺座","南極座","蛇夫座","獵戶座",
+          "孔雀座","飛馬座","英仙座","鳳凰座","繪架座","雙魚座","南魚座","船尾座","羅盤座","網罟座",
+          "天箭座","人馬座","天蠍座","玉夫座","盾牌座","巨蛇座","六分儀座","金牛座","望遠鏡座","三角座",
+          "南三角座","杜鵑座","大熊座","小熊座","船帆座","室女座","飛魚座","狐狸座"
+        ],
+        // Drops the trailing "座" (generic "constellation of ___" suffix) as
+        // a shorthand answer - same idea as Japan Prefectures dropping its
+        // 県/府/都 administrative suffix.
+        aliases: {
+          "仙女座": ["仙女"], "唧筒座": ["唧筒"], "天燕座": ["天燕"], "寶瓶座": ["寶瓶"], "天鷹座": ["天鷹"],
+          "天壇座": ["天壇"], "白羊座": ["白羊"], "御夫座": ["御夫"], "牧夫座": ["牧夫"], "雕具座": ["雕具"],
+          "鹿豹座": ["鹿豹"], "巨蟹座": ["巨蟹"], "獵犬座": ["獵犬"], "大犬座": ["大犬"], "小犬座": ["小犬"],
+          "摩羯座": ["摩羯"], "船底座": ["船底"], "仙后座": ["仙后"], "半人馬座": ["半人馬"], "仙王座": ["仙王"],
+          "鯨魚座": ["鯨魚"], "蝘蜓座": ["蝘蜓"], "圓規座": ["圓規"], "天鴿座": ["天鴿"], "后髮座": ["后髮"],
+          "南冕座": ["南冕"], "北冕座": ["北冕"], "烏鴉座": ["烏鴉"], "巨爵座": ["巨爵"], "南十字座": ["南十字"],
+          "天鵝座": ["天鵝"], "海豚座": ["海豚"], "劍魚座": ["劍魚"], "天龍座": ["天龍"], "小馬座": ["小馬"],
+          "波江座": ["波江"], "天爐座": ["天爐"], "雙子座": ["雙子"], "天鶴座": ["天鶴"], "武仙座": ["武仙"],
+          "時鐘座": ["時鐘"], "長蛇座": ["長蛇"], "水蛇座": ["水蛇"], "印第安座": ["印第安"], "蝎虎座": ["蝎虎"],
+          "獅子座": ["獅子"], "小獅座": ["小獅"], "天兔座": ["天兔"], "天秤座": ["天秤"], "豺狼座": ["豺狼"],
+          "天貓座": ["天貓"], "天琴座": ["天琴"], "山案座": ["山案"], "顯微鏡座": ["顯微鏡"], "麒麟座": ["麒麟"],
+          "蒼蠅座": ["蒼蠅"], "矩尺座": ["矩尺"], "南極座": ["南極"], "蛇夫座": ["蛇夫"], "獵戶座": ["獵戶"],
+          "孔雀座": ["孔雀"], "飛馬座": ["飛馬"], "英仙座": ["英仙"], "鳳凰座": ["鳳凰"], "繪架座": ["繪架"],
+          "雙魚座": ["雙魚"], "南魚座": ["南魚"], "船尾座": ["船尾"], "羅盤座": ["羅盤"], "網罟座": ["網罟"],
+          "天箭座": ["天箭"], "人馬座": ["人馬"], "天蠍座": ["天蠍"], "玉夫座": ["玉夫"], "盾牌座": ["盾牌"],
+          "巨蛇座": ["巨蛇"], "六分儀座": ["六分儀"], "金牛座": ["金牛"], "望遠鏡座": ["望遠鏡"], "三角座": ["三角"],
+          "南三角座": ["南三角"], "杜鵑座": ["杜鵑"], "大熊座": ["大熊"], "小熊座": ["小熊"], "船帆座": ["船帆"],
+          "室女座": ["室女"], "飛魚座": ["飛魚"], "狐狸座": ["狐狸"]
         }
       }
     }

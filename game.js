@@ -81,7 +81,7 @@ let onlineRoomUnsubscribe = null;
 let rematchMode = false;
 let rematchRoomCode = null;
 let rematchMyPlayer = null;
-const GROUP_ORDER = ["Geography", "Chemistry", "Sports", "Entertainment", "Culture"];
+const GROUP_ORDER = ["Geography", "Science", "Sports", "Entertainment", "Culture"];
 const PLAY_LABELS = { en: "Play in English", ja: "日本語でプレイ", zh: "用繁體中文玩" };
 
 /* ---------------- Elements ---------------- */

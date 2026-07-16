@@ -15,7 +15,7 @@ Pick a category, then name as many answers as you can. Each answer gets its own 
 - **Online Versus mode** — play against someone on a different device: create a match to get a short room code, share it, and play in real time once they join (see [Online play](#online-play) below)
 - **Adjustable time limit** — 3–30 seconds per answer, set before you start
 - **High Score and Most Answered records** — tracked separately per category (and per language, where applicable), saved locally in your browser
-- **Language choice** — Japan Prefectures (English/Japanese) and Naturally Occurring Elements (English/Traditional Chinese) can each be played in either language
+- **Language choice** — Japan Prefectures, Naturally Occurring Elements, and 88 IAU Constellations each support both English and Traditional Chinese
 - **Alias-aware answer matching** — accepts common abbreviations, nicknames, and accented/unaccented spellings (e.g. "USA" for United States, "Curacao" for Curaçao, "Doncic" for Dončić)
 
 ## Categories
@@ -28,8 +28,9 @@ Pick a category, then name as many answers as you can. Each answer gets its own 
 - Japan Prefectures (English / 日本語)
 - Taipei MRT Stations (繁體中文 only for now)
 
-**Chemistry**
+**Science**
 - Naturally Occurring Elements (Periodic Table) — the 94 naturally occurring elements, Hydrogen through Plutonium (English / 繁體中文 — accepts chemical symbols too, e.g. "Fe" for Iron)
+- 88 IAU Constellations (English / 繁體中文 — accepts official 3-letter IAU abbreviations too, e.g. "UMa" for Ursa Major)
 
 **Sports**
 - Countries that have Qualified for the FIFA World Cup
