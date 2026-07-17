@@ -54,7 +54,9 @@ Pick a category, then name as many answers as you can. Each answer gets its own 
 - `style.css` — all styling
 - `categories.js` — the category/answer data
 - `logic.js` — pure answer-matching/scoring-key helpers (no DOM/Firebase), shared by `game.js` and the test suite
-- `game.js` — game state and logic (solo, local versus, and online versus)
+- `records.js` — localStorage-backed high score / most-answered / cleared-before persistence
+- `menu.js` — menu screen: group/category browsing, search, language filter, online create/join sub-UI
+- `game.js` — gameplay state and logic (solo, local versus, and online versus) plus online session management
 - `firebase-init.js` / `online.js` — Firebase Firestore wiring for Online Versus mode (see below)
 - `firestore.rules` — Firestore security rules (deployed via the Firebase console, not part of the app bundle)
 - `test.html` / `test/` — unit tests for `logic.js` (see below)
