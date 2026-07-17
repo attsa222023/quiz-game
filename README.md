@@ -15,7 +15,7 @@ Pick a category, then name as many answers as you can. Each answer gets its own 
 - **Online Versus mode** — play against someone on a different device: create a match to get a short room code, share it, and play in real time once they join (see [Online play](#online-play) below)
 - **Adjustable time limit** — 3–30 seconds per answer, set before you start
 - **High Score and Most Answered records** — tracked separately per category (and per language, where applicable), saved locally in your browser
-- **Language choice** — Japan Prefectures, Naturally Occurring Elements, 88 IAU Constellations, and First Generation Pokémon each support both English and Traditional Chinese
+- **Language choice** — Japan Prefectures, Naturally Occurring Elements, and 88 IAU Constellations support both English and Traditional Chinese; First Generation Pokémon supports English, Japanese, and Traditional Chinese
 - **Alias-aware answer matching** — accepts common abbreviations, nicknames, and accented/unaccented spellings (e.g. "USA" for United States, "Curacao" for Curaçao, "Doncic" for Dončić)
 - **Category search and language filter** — search across every group at once by name, and/or filter down to only categories available in a specific language
 
@@ -42,7 +42,7 @@ Pick a category, then name as many answers as you can. Each answer gets its own 
 **Entertainment**
 - Pixar Feature Films
 - Marvel Cinematic Universe Films
-- First Generation Pokémon (151) (English / 繁體中文)
+- First Generation Pokémon (151) (English / 日本語 / 繁體中文)
 - Best Picture Oscar Winners (1927-2025)
 
 **Culture**
