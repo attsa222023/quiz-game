@@ -15,7 +15,7 @@ Pick a category, then name as many answers as you can. Each answer gets its own 
 - **Online Versus mode** — play against someone on a different device: create a match to get a short room code, share it, and play in real time once they join (see [Online play](#online-play) below)
 - **Adjustable time limit** — 3–30 seconds per answer, set before you start
 - **High Score and Most Answered records** — tracked separately per category (and per language, where applicable), saved locally in your browser
-- **Language choice** — Japan Prefectures, Naturally Occurring Elements, and 88 IAU Constellations support both English and Traditional Chinese; First Generation Pokémon supports English, Japanese, and Traditional Chinese
+- **Language choice** — Japan Prefectures, Naturally Occurring Elements, 88 IAU Constellations, MLB Teams, and NBA Teams support both English and Traditional Chinese; First Generation Pokémon supports English, Japanese, and Traditional Chinese
 - **Alias-aware answer matching** — accepts common abbreviations, nicknames, and accented/unaccented spellings (e.g. "USA" for United States, "Curacao" for Curaçao, "Doncic" for Dončić)
 - **Category search and language filter** — search across every group at once by name, and/or filter down to only categories available in a specific language
 
@@ -35,8 +35,8 @@ Pick a category, then name as many answers as you can. Each answer gets its own 
 
 **Sports**
 - Countries that have Qualified for the FIFA World Cup
-- MLB Teams
-- NBA Teams
+- MLB Teams (English / 繁體中文)
+- NBA Teams (English / 繁體中文)
 - Active NBA All-Stars (2025-26)
 
 **Entertainment**
