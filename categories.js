@@ -799,5 +799,39 @@ const CATEGORIES = [
         ]
       }
     }
+  },
+  {
+    // Source: interbrand.com/best-global-brands/global/ (fetched directly -
+    // the ranking table is client-rendered, not present in the page's raw
+    // HTML). Chosen over Forbes' Global 2000 (which ranks by sales/profit/
+    // assets/market value, not fame) since Interbrand's methodology
+    // explicitly weighs consumer brand awareness, so its top 100 reads as
+    // "globally recognizable brands" rather than "largest companies by
+    // financial size."
+    name: "Interbrand Best Global Brands (2025)",
+    group: "Culture",
+    answers: [
+      "Apple","Microsoft","Amazon","Google","Samsung","Toyota","Coca-Cola","Instagram","McDonald's","Mercedes-Benz",
+      "Cisco","Louis Vuitton","YouTube","BMW","NVIDIA","Oracle","Disney","SAP","Facebook","Adobe",
+      "Hermès","IBM","Nike","Chanel","Tesla","J.P. Morgan","Allianz","Netflix","Honda","Hyundai",
+      "BlackRock","Booking.com","Visa","Sony","IKEA","MasterCard","Accenture","Pepsi","Qualcomm","PayPal",
+      "Zara","Salesforce","AXA","GE Aerospace","Airbnb","UPS","UNIQLO","Siemens","adidas","LEGO",
+      "Dell","Audi","Nintendo","Ferrari","Goldman Sachs","Volkswagen","Porsche","Spotify","L'Oréal Paris","Pampers",
+      "eBay","Citi","Nescafé","Uber","Schneider Electric","Budweiser","HP","H&M","Gucci","Monster",
+      "Intel","HSBC","Cartier","Philips","LinkedIn","Colgate","Santander","Gillette","Nestlé","Corona",
+      "Xiaomi","Nissan","Dior","Caterpillar","Nasdaq","Prada","3M","John Deere","Kia","BYD",
+      "Danone","FedEx","Sephora","Tiffany & Co.","Pandora","Huawei","Range Rover","Nespresso","Shopify","DHL"
+    ],
+    aliases: {
+      "Coca-Cola": ["Coke"],
+      "Mercedes-Benz": ["Mercedes"],
+      "Louis Vuitton": ["LV"],
+      "IBM": ["International Business Machines"],
+      "L'Oréal Paris": ["L'Oreal","Loreal"],
+      "UPS": ["United Parcel Service"],
+      "Booking.com": ["Booking"],
+      "FedEx": ["Federal Express"],
+      "Tiffany & Co.": ["Tiffany"]
+    }
   }
 ];
