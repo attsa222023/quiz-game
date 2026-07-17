@@ -768,5 +768,36 @@ const CATEGORIES = [
         ]
       }
     }
+  },
+  {
+    // Source: user-supplied ranked list (name + population count per rank).
+    // Scoped to the top 100 rather than matching Taiwan's 150 - Japanese
+    // surnames have a much longer tail (100,000+ distinct surnames exist,
+    // versus a much more concentrated pool for Chinese/Taiwanese surnames),
+    // so even the top 100 already covers only a small population share and
+    // recognizability drops off faster past that point. 斎藤 (#19) and 斉藤
+    // (#41) are different kanji for the same reading (Saito) - kept as
+    // separate entries since the source ranks them separately, matching
+    // how the Taiwanese Surnames category treats its own variant-character
+    // pairs. JA only for now, structured with `languages` for easy future
+    // extension.
+    name: "Japanese Surnames (Top 100)",
+    group: "Culture",
+    languages: {
+      ja: {
+        answers: [
+          "佐藤","鈴木","高橋","田中","伊藤","渡辺","山本","中村","小林","加藤",
+          "吉田","山田","佐々木","山口","松本","井上","木村","林","斎藤","清水",
+          "山崎","森","池田","橋本","阿部","石川","山下","中島","石井","小川",
+          "前田","岡田","長谷川","藤田","後藤","近藤","村上","遠藤","青木","坂本",
+          "斉藤","福田","太田","西村","藤井","金子","岡本","藤原","中野","三浦",
+          "原田","中川","松田","竹内","小野","田村","中山","和田","石田","森田",
+          "上田","内田","原","柴田","酒井","宮崎","横山","高木","安藤","宮本",
+          "大野","小島","谷口","今井","工藤","高田","増田","丸山","杉山","新井",
+          "村田","大塚","小山","平野","藤本","野口","河野","上野","武田","松井",
+          "岩崎","千葉","菅原","木下","久保","野村","佐野","松尾","市川","杉本"
+        ]
+      }
+    }
   }
 ];
