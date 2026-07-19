@@ -107,6 +107,17 @@ function subscribeToRoom(roomCode, onUpdate) {
   });
 }
 
+// One-time direct read, bypassing subscribeToRoom's listener entirely - used
+// to force a resync when a client suspects its own listener may have gone
+// stale (backgrounded tab, dropped connection) rather than trusting it to
+// eventually catch up on its own.
+async function fetchRoom(roomCode) {
+  const db = window.Firebase.db;
+  const ref = doc(db, "rooms", roomCode);
+  const snap = await getDoc(ref);
+  return snap.exists() ? snap.data() : null;
+}
+
 async function cancelRoom(roomCode) {
   const db = window.Firebase.db;
   const ref = doc(db, "rooms", roomCode);
@@ -292,6 +303,7 @@ window.Online = {
   createRoom,
   joinRoom,
   subscribeToRoom,
+  fetchRoom,
   cancelRoom,
   writeCorrectAnswer,
   writeTimeout,

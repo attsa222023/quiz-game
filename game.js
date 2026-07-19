@@ -300,6 +300,32 @@ function leaveOnlineRoom() {
   rematchMyPlayer = null;
 }
 
+// Forces a direct one-time resync from the server, bypassing the realtime
+// listener entirely. Used when a client suspects its own listener may have
+// gone stale rather than waiting for it to eventually catch up on its own.
+async function resyncOnlineRoom() {
+  if (!state || !state.online || !state.roomCode) return;
+  const roomCode = state.roomCode;
+  try {
+    const data = await Online.fetchRoom(roomCode);
+    if (data) applyRoomSnapshot(roomCode, data);
+  } catch (err) {
+    console.error("resyncOnlineRoom failed", err);
+  }
+}
+
+// A backgrounded tab (e.g. phone screen off, switched apps) can have its
+// realtime listener silently throttled or dropped by the browser - nothing
+// forces it to catch up again until the next Firestore update happens to
+// arrive. Resyncing the moment the tab becomes visible again catches this
+// immediately, rather than leaving the screen stuck until the timeout safety
+// net (or the opponent's next move) eventually resolves it.
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    resyncOnlineRoom();
+  }
+});
+
 function startGame(catIndex, mode, lang) {
   const cat = CATEGORIES[catIndex];
   const source = resolveCategorySource(cat, lang);
@@ -458,14 +484,37 @@ function handleTimeoutLocal() {
 // just whoever's turn it is - so a backgrounded/throttled tab can't stall
 // the match. Firestore's transaction (not this client) adjudicates who
 // actually resolves it; see online.js writeTimeout.
-function handleTimeoutOnline() {
+//
+// Resyncs directly from the server first, before trusting the local state
+// enough to write a timeout against it: if this client's realtime listener
+// silently missed an update (dropped connection, backgrounded tab), its own
+// countdown reaching zero doesn't actually mean the opponent missed - it
+// might just mean this client is stale. applyRoomSnapshot below picks up
+// whatever the resync finds (including a slot that already moved on), so by
+// the time writeTimeout is considered, expectedTurn/expectedSlotStart are
+// only used if they still match reality.
+async function handleTimeoutOnline() {
   if (state._timeoutAttempted) return;
   state._timeoutAttempted = true;
+  const roomCode = state.roomCode;
+  const expectedTurn = state.turn;
+  const expectedSlotStart = state.slotStart;
+  try {
+    const data = await Online.fetchRoom(roomCode);
+    if (data) applyRoomSnapshot(roomCode, data);
+  } catch (err) {
+    console.error("resync before timeout failed", err);
+  }
+  // The resync may have moved us on entirely (new slot, match finished, or
+  // even a rematch already restarted this same room) - only proceed with
+  // the timeout write if none of that happened.
+  if (!state || !state.online || state.roomCode !== roomCode) return;
+  if (state.turn !== expectedTurn || state.slotStart !== expectedSlotStart) return;
   // state.slotStart is the resolved server-timestamp ms value for the
   // current slot - the CAS check in online.js compares against this, not a
   // client-computed deadline, so the race is adjudicated independent of
   // either device's clock accuracy.
-  Online.writeTimeout(state.roomCode, state.turn, state.slotStart).catch(err => {
+  Online.writeTimeout(roomCode, expectedTurn, expectedSlotStart).catch(err => {
     console.error("writeTimeout failed", err);
   });
 }
