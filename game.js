@@ -1,6 +1,17 @@
 const BASE_POINTS = 100;
 const MAX_BONUS = 100;
 const MAX_MISSED_DISPLAY = 20;
+// Online matches enforce the deadline this much later than they visually
+// display it - the displayed countdown (slotDeadline) still hits zero right
+// on time for both players, but a timeout isn't actually written until this
+// extra window also passes. This exists because slotStartedAt starts
+// ticking the instant the server records it, not when each client's
+// listener actually delivers the news - a player far from wherever Firestore
+// is hosted can lose a meaningful chunk of their nominal answer window
+// before their screen even shows it's their turn. A flat grace period on
+// enforcement (not on what's displayed) gives that time back without
+// changing the on-screen timer or the per-player CAS logic at all.
+const ONLINE_TIMEOUT_GRACE_MS = 1500;
 
 /* ---------------- State ---------------- */
 let state = null;
@@ -142,6 +153,7 @@ function startOnlineGame(roomData) {
     // and starts the tick loop then, rather than here.
     slotStart: null,
     slotDeadline: null,
+    slotEnforceDeadline: null,
     clockOffsetMs: 0,
     turn: roomData.turn,
     consecutiveMisses: roomData.consecutiveMisses || 0,
@@ -211,6 +223,7 @@ function applyRoomSnapshot(roomCode, data) {
     if (resolvedMs !== state.slotStart) {
       state.slotStart = resolvedMs;
       state.slotDeadline = resolvedMs + state.timeLimit * 1000;
+      state.slotEnforceDeadline = state.slotDeadline + ONLINE_TIMEOUT_GRACE_MS;
       // Per-slot recalibration of this device's own clock error against the
       // server's, so this device's *own* countdown rendering stays close to
       // true time too - not just cross-device race-safety, which the
@@ -442,17 +455,21 @@ function tick() {
   fill.classList.toggle("warn", frac <= 0.5 && frac > 0.2);
   fill.classList.toggle("danger", frac <= 0.2);
 
-  if (remainingMs <= 0) {
-    if (state.online) {
+  if (state.online) {
+    // The displayed bar above already hit 0%/red at slotDeadline, right on
+    // schedule for both players. Actually enforcing the timeout waits until
+    // the later, hidden slotEnforceDeadline - see ONLINE_TIMEOUT_GRACE_MS.
+    const enforceRemainingMs = state.slotEnforceDeadline - now;
+    if (enforceRemainingMs <= 0) {
       // Keep ticking - state._timeoutAttempted guards against spamming the
       // same timeout write every 50ms while waiting for either client's
       // write (or the opponent's answer) to land and push a new deadline.
       handleTimeoutOnline();
-    } else {
-      clearInterval(tickHandle);
-      tickHandle = null;
-      handleTimeoutLocal();
     }
+  } else if (remainingMs <= 0) {
+    clearInterval(tickHandle);
+    tickHandle = null;
+    handleTimeoutLocal();
   }
 }
 
