@@ -535,6 +535,41 @@ const CATEGORIES = [
     }
   },
   {
+    // Individual disciplines rather than the IOC's own bundled "sport" names
+    // (e.g. Swimming/Diving/Water Polo rather than one "Aquatics" entry) -
+    // matches how people actually think to name these. Superset of the
+    // Paris 2024 program (48 disciplines, incl. Breaking) and the LA 2028
+    // additions (Baseball, Softball, Cricket, Flag Football, Lacrosse,
+    // Squash), so the list stays accurate across both Games.
+    name: "Summer Olympic Sports",
+    group: "Sports",
+    answers: [
+      "Swimming","Diving","Water Polo","Artistic Swimming","Marathon Swimming","Athletics",
+      "Basketball","3x3 Basketball","Baseball","Softball","Cricket","Flag Football","Field Hockey",
+      "Football","Handball","Rugby Sevens","Volleyball","Beach Volleyball","Lacrosse",
+      "Boxing","Judo","Taekwondo","Freestyle Wrestling","Greco-Roman Wrestling","Fencing",
+      "Road Cycling","Track Cycling","Mountain Biking","BMX Racing","BMX Freestyle",
+      "Dressage","Eventing","Jumping",
+      "Artistic Gymnastics","Rhythmic Gymnastics","Trampoline Gymnastics",
+      "Badminton","Table Tennis","Tennis","Squash","Golf","Archery","Shooting",
+      "Sailing","Surfing","Skateboarding","Sport Climbing","Canoe Slalom","Canoe Sprint","Rowing",
+      "Breaking","Modern Pentathlon","Triathlon","Weightlifting"
+    ],
+    aliases: {
+      "3x3 Basketball": ["3x3"],
+      "Beach Volleyball": ["Beach Volley"],
+      "BMX Racing": ["BMX"],
+      "Marathon Swimming": ["Open Water Swimming"],
+      "Artistic Swimming": ["Synchronized Swimming","Synchronised Swimming","Synchro Swimming"],
+      "Trampoline Gymnastics": ["Trampoline"],
+      "Rhythmic Gymnastics": ["Rhythmic"],
+      "Modern Pentathlon": ["Pentathlon"],
+      "Sport Climbing": ["Climbing"],
+      "Field Hockey": ["Hockey"],
+      "Table Tennis": ["Ping Pong"]
+    }
+  },
+  {
     name: "Pixar Feature Films",
     group: "Entertainment",
     answers: [

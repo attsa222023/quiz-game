@@ -38,6 +38,7 @@ Pick a category, then name as many answers as you can. Each answer gets its own 
 - MLB Teams (English / 繁體中文)
 - NBA Teams (English / 繁體中文)
 - Active NBA All-Stars (2025-26)
+- Summer Olympic Sports
 
 **Entertainment**
 - Pixar Feature Films
